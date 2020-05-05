@@ -23,7 +23,9 @@ glm::vec3 cam_pos = glm::vec3(0, 2, -5);
 glm::vec3 cam_dir = glm::vec3(0, 0, 1);
 glm::vec3 cam_up = glm::vec3(0, 1, 0);
 //camera move speed
-float camera_speed = 0.3;
+float camera_scroll_speed = 0.3;
+float edge_scroll_region = 50; //in pixels
+bool camera_scroll_continuous = true;
 
 //Model
 glm::vec3 transl = glm::vec3(0, 0, 0);
@@ -132,35 +134,47 @@ void cursor_scroll(GLFWwindow* window) {
 	double* ypos = new double -1;
 	glfwGetCursorPos(window, xpos, ypos);
 
-	//glfwGetWindowSize(window, width, height);
-	//determine how close the mouse is to the left and right side of the screen
-	glm::vec3 translateX = glm::vec3(0, 0, 0);
-	glm::vec3 translateY = glm::vec3(0, 0, 0);
-
-	if (*xpos < 50) {
-		//move camera left
-		//translateX += glm::cross(cam_up, cam_dir);
-		translateX += glm::vec3(1, 0, 0);
-	} 
-	else if (*xpos > (WIDTH - 50)) {
-		//move camera right
-		//translateX -= glm::cross(cam_up, cam_dir);
-		translateX += glm::vec3(-1, 0, 0);
-	} 
-
-	//determine how close the mouse is to the top and bottom of the screen
-	if (*ypos < 50) {
-		//move camera down
-		//translateY += cam_up;
-		translateY += glm::vec3(0, 1, 0);
-	} 
-	else if(*ypos > (HEIGHT - 50)) {
-		//move camera up
-		//translateY -= cam_up;
-		translateY += glm::vec3(0, -1, 0);
+	//which type of camera movement is being used
+	if (camera_scroll_continuous) {
+		//determine if the cursor is within n units of the screen border
+		if (*xpos < edge_scroll_region || *ypos < edge_scroll_region || *ypos >(HEIGHT - edge_scroll_region) || *xpos >(WIDTH - edge_scroll_region)) {
+			//the cursor is somewhere in the edge region
+			//draw a direction vector from screen center to current cursor position
+			// destination_point - start_point = direction vector
+			glm::vec3 scroll_direction = glm::normalize(glm::vec3((WIDTH / 2) - *xpos, (HEIGHT / 2) - *ypos, 0)) * camera_scroll_speed;
+			//add the direction vector to the camera position to move it in the desired direction
+			cam_pos += scroll_direction;
+		}
 	}
-	cam_pos += camera_speed * (translateX + translateY);
+	else {
+		//determine how close the mouse is to the left and right side of the screen
+		glm::vec3 translateX = glm::vec3(0, 0, 0);
+		glm::vec3 translateY = glm::vec3(0, 0, 0);
 
+		if (*xpos < 50) {
+			//move camera left
+			//translateX += glm::cross(cam_up, cam_dir);
+			translateX += glm::vec3(1, 0, 0);
+		}
+		else if (*xpos > (WIDTH - 50)) {
+			//move camera right
+			//translateX -= glm::cross(cam_up, cam_dir);
+			translateX += glm::vec3(-1, 0, 0);
+		}
+
+		//determine how close the mouse is to the top and bottom of the screen
+		if (*ypos < 50) {
+			//move camera down
+			//translateY += cam_up;
+			translateY += glm::vec3(0, 1, 0);
+		}
+		else if (*ypos > (HEIGHT - 50)) {
+			//move camera up
+			//translateY -= cam_up;
+			translateY += glm::vec3(0, -1, 0);
+		}
+		cam_pos += camera_scroll_speed * (translateX + translateY);
+	}
 }
 
 int init() {
