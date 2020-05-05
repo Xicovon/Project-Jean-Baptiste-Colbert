@@ -1,5 +1,5 @@
-//example skeleton code 2019 winter comp371
 //modified from http://learnopengl.com/
+//modified from example skeleton code 2019 winter comp371
 
 #include "stdafx.h"
 
@@ -17,7 +17,7 @@
 using namespace std;
 
 // Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 800;
+const GLuint WIDTH = 1920, HEIGHT = 1080;
 GLFWwindow *window;
 
 //Camera
@@ -123,13 +123,17 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		drag = false;
 	}
 }
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	cam_pos -= glm::vec3(0, 0, (-yoffset)*2);
+}
+
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
-	if (drag == true) {
-		//moves the camera in or out relative to the distance the mouse moved
-		cam_pos -= glm::vec3(0,0, (ypos - yInit)/10);
-		//updates the new starting position of the mouse
-		glfwGetCursorPos(window, &xInit, &yInit);
-	}
+	//if (drag == true) {
+	//	//moves the camera in or out relative to the distance the mouse moved
+	//	cam_pos -= glm::vec3(0,0, (ypos - yInit)/10);
+	//	//updates the new starting position of the mouse
+	//	glfwGetCursorPos(window, &xInit, &yInit);
+	//}
 }
 
 int init() {
@@ -144,7 +148,7 @@ int init() {
 	glEnable(GL_DEPTH_TEST);
 
 	//WINDOW
-	window = glfwCreateWindow(WIDTH, HEIGHT, "Assignment 1", nullptr, nullptr);
+	window = glfwCreateWindow(WIDTH, HEIGHT, "Project JBC", nullptr, nullptr);
 
 	if (nullptr == window)
 	{
@@ -164,15 +168,18 @@ int init() {
 	}
 	return 0;
 }
+
 // The MAIN function, from here we start the application and run the game loop
 int main()
 {
-	if (init() != 0)
+	if (init() != 0) {
 		return EXIT_FAILURE;
+	}
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetCursorPosCallback(window, cursor_pos_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
 	// Initialize GLEW to setup the OpenGL Function pointers
