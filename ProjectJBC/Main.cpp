@@ -2,12 +2,10 @@
 //modified from example skeleton code 2019 winter comp371
 
 #include "stdafx.h"
-
 #include "..\glew\glew.h"	// include GL Extension Wrangler
 #include "..\glfw\glfw3.h"	// include GLFW helper library
 #include <stdio.h>
 #include <iostream>
-#include <string>
 #include <fstream>
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
@@ -24,6 +22,8 @@ GLFWwindow *window;
 glm::vec3 cam_pos = glm::vec3(0, 2, -5);
 glm::vec3 cam_dir = glm::vec3(0, 0, 1);
 glm::vec3 cam_up = glm::vec3(0, 1, 0);
+//camera move speed
+float camera_speed = 0.3;
 
 //Model
 glm::vec3 transl = glm::vec3(0, 0, 0);
@@ -127,13 +127,40 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	cam_pos -= glm::vec3(0, 0, (-yoffset)*2);
 }
 
-void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
-	//if (drag == true) {
-	//	//moves the camera in or out relative to the distance the mouse moved
-	//	cam_pos -= glm::vec3(0,0, (ypos - yInit)/10);
-	//	//updates the new starting position of the mouse
-	//	glfwGetCursorPos(window, &xInit, &yInit);
-	//}
+void cursor_scroll(GLFWwindow* window) {
+	double* xpos = new double -1;
+	double* ypos = new double -1;
+	glfwGetCursorPos(window, xpos, ypos);
+
+	//glfwGetWindowSize(window, width, height);
+	//determine how close the mouse is to the left and right side of the screen
+	glm::vec3 translateX = glm::vec3(0, 0, 0);
+	glm::vec3 translateY = glm::vec3(0, 0, 0);
+
+	if (*xpos < 50) {
+		//move camera left
+		//translateX += glm::cross(cam_up, cam_dir);
+		translateX += glm::vec3(1, 0, 0);
+	} 
+	else if (*xpos > (WIDTH - 50)) {
+		//move camera right
+		//translateX -= glm::cross(cam_up, cam_dir);
+		translateX += glm::vec3(-1, 0, 0);
+	} 
+
+	//determine how close the mouse is to the top and bottom of the screen
+	if (*ypos < 50) {
+		//move camera down
+		//translateY += cam_up;
+		translateY += glm::vec3(0, 1, 0);
+	} 
+	else if(*ypos > (HEIGHT - 50)) {
+		//move camera up
+		//translateY -= cam_up;
+		translateY += glm::vec3(0, -1, 0);
+	}
+	cam_pos += camera_speed * (translateX + translateY);
+
 }
 
 int init() {
@@ -178,7 +205,7 @@ int main()
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	glfwSetCursorPosCallback(window, cursor_pos_callback);
+	//glfwSetCursorPosCallback(window, cursor_pos_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
@@ -235,7 +262,8 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
-		
+		cursor_scroll(window);
+
 		//rotations about the up axis are done by changing cam_dir
 		glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
 		glUniformMatrix4fv(vm_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));

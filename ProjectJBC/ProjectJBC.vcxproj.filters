@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="map.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="province.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="OBJloader.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="objloaderIndex.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="shaderloader.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Game">
+      <UniqueIdentifier>{28a41519-3c2a-4a37-8e6f-c2ba24816356}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{d8a2c505-427c-4d75-8a80-94e9e7e9a20e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
