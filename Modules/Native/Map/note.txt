@@ -1,0 +1,1 @@
+bmp must be 24bit color depth. stb library throws error loading 32bit bmp

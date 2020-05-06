@@ -9,4 +9,8 @@ private:
 	string name;
 	vector<Province> provinces;
 	//shape (rectangle/sphere)
+public:
+	Map() {
+		name = "default";
+	}
 };

@@ -41,7 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\Project-Jean-Baptiste-Colbert\ProjectJBC;$(IncludePath)</IncludePath>
+    <IncludePath>E:\Project-Jean-Baptiste-Colbert\stb;E:\Project-Jean-Baptiste-Colbert\ProjectJBC;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -117,6 +117,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="map.h" />
+    <ClInclude Include="mapLoader.h" />
     <ClInclude Include="OBJloader.h" />
     <ClInclude Include="objloaderIndex.h" />
     <ClInclude Include="province.h" />
@@ -134,6 +135,5 @@
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

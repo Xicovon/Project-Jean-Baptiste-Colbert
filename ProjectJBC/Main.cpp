@@ -12,6 +12,8 @@
 #include "gtc/type_ptr.hpp"
 #include "OBJloader.h"  //include the object loader
 #include "shaderloader.h"
+#include "mapLoader.h"
+#include <string>
 using namespace std;
 
 // Window dimensions
@@ -26,6 +28,9 @@ glm::vec3 cam_up = glm::vec3(0, 1, 0);
 float camera_scroll_speed = 0.3;
 float edge_scroll_region = 50; //in pixels
 bool camera_scroll_continuous = true;
+
+//module path
+string module_path = "E:\\Project-Jean-Baptiste-Colbert\\Modules\\Native\\";
 
 //Model
 glm::vec3 transl = glm::vec3(0, 0, 0);
@@ -216,6 +221,10 @@ int main()
 	if (init() != 0) {
 		return EXIT_FAILURE;
 	}
+	Map* map = new Map();
+	string map_path = module_path + "Map\\province_map.bmp";
+	LoadMap(map, map_path.c_str());
+
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);

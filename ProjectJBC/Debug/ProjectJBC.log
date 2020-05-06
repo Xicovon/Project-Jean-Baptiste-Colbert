@@ -1,11 +1,11 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(452,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (COMP371.vcxproj, COMP371_Lab3.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Main.cpp
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(26,32): warning C4305: 'initializing': truncation from 'double' to 'float'
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(95,23): warning C4305: '+=': truncation from 'double' to 'float'
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(99,23): warning C4305: '-=': truncation from 'double' to 'float'
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(103,23): warning C4305: '+=': truncation from 'double' to 'float'
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(107,23): warning C4305: '-=': truncation from 'double' to 'float'
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(111,17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(114,17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(28,32): warning C4305: 'initializing': truncation from 'double' to 'float'
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(100,23): warning C4305: '+=': truncation from 'double' to 'float'
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(104,23): warning C4305: '-=': truncation from 'double' to 'float'
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(108,23): warning C4305: '+=': truncation from 'double' to 'float'
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(112,23): warning C4305: '-=': truncation from 'double' to 'float'
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(116,17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(119,17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/FORCE' specification
   ProjectJBC.vcxproj -> E:\Project-Jean-Baptiste-Colbert\Debug\ProjectJBC.exe
