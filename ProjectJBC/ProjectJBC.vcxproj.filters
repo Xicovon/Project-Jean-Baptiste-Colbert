@@ -33,6 +33,9 @@
     <ClInclude Include="mapLoader.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="provinceTerrain.h">
+      <Filter>Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Game">

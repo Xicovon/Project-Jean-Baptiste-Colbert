@@ -221,9 +221,9 @@ int main()
 	if (init() != 0) {
 		return EXIT_FAILURE;
 	}
-	Map* map = new Map();
-	string map_path = module_path + "Map\\province_map.bmp";
-	LoadMap(map, map_path.c_str());
+	
+	string map_path = module_path + "Map\\";
+	Map* map = LoadMap(map_path);
 
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
