@@ -22,7 +22,7 @@ bool loadOBJ(
 		getchar();
 		return false;
 	}
-
+	
 	while (1) {
 
 		char lineHeader[128];
@@ -105,6 +105,9 @@ bool loadOBJ(
 	//std::cout << "UV indices: " << uvIndices.size() << std::endl;
 	//std::cout << "Normal indices: " << normalIndices.size() << std::endl;
 	// For each vertex of each triangle
+
+	std::cout << "Object Load begin" << std::endl;
+
 	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
 		if (uvIndices.size() != 0) {
 			if (i < uvIndices.size()) {

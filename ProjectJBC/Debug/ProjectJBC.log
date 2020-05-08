@@ -1,5 +1,6 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(452,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (COMP371.vcxproj, COMP371_Lab3.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Main.cpp
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\map.h(183,21): warning C4018: '<': signed/unsigned mismatch
 E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(28,32): warning C4305: 'initializing': truncation from 'double' to 'float'
 E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(100,23): warning C4305: '+=': truncation from 'double' to 'float'
 E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(104,23): warning C4305: '-=': truncation from 'double' to 'float'

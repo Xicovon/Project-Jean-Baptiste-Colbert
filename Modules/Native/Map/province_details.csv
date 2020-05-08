@@ -1,4 +1,4 @@
 id,name,r,g,b,adjacent provinces id,terrain id
-1,Red,255,0,0,"2,3",1
-2,Green,0,255,0,"1,3",1
-3,Blue,0,0,255,"1,2",2
+0,Red,255,0,0,"1,2",0
+1,Green,0,255,0,"0,2",0
+2,Blue,0,0,255,"0,1",1

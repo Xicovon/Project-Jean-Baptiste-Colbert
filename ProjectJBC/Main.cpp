@@ -12,7 +12,7 @@
 #include "gtc/type_ptr.hpp"
 #include "OBJloader.h"  //include the object loader
 #include "shaderloader.h"
-#include "mapLoader.h"
+#include "map.h"
 #include <string>
 using namespace std;
 
@@ -223,7 +223,8 @@ int main()
 	}
 	
 	string map_path = module_path + "Map\\";
-	Map* map = LoadMap(map_path);
+	Map* map = new Map(map_path);
+	cout << "Map Load Complete" << endl;
 
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
@@ -249,8 +250,13 @@ int main()
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> UVs;
 	//loadOBJ("cube.obj", vertices, normals, UVs); //read the vertices from the cube.obj file
-	loadOBJ("cat.obj", vertices, normals, UVs);
-
+	//loadOBJ("cat - Copy.obj", vertices, normals, UVs);
+	
+	vertices.push_back(glm::vec3(1, 1, 0));
+	vertices.push_back(glm::vec3(1, -1, 0));
+	vertices.push_back(glm::vec3(-1, 1, 0));
+	vertices.push_back(glm::vec3(-1, -1, 0));
+			
 	GLuint VAO;
 	GLuint vertices_VBO;
 
@@ -310,7 +316,7 @@ int main()
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, vertices.size());
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
 		glBindVertexArray(0);
 
 		// Swap the screen buffers
