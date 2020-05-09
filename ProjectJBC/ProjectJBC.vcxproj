@@ -117,7 +117,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="map.h" />
-    <ClInclude Include="mapLoader.h" />
     <ClInclude Include="OBJloader.h" />
     <ClInclude Include="objloaderIndex.h" />
     <ClInclude Include="province.h" />

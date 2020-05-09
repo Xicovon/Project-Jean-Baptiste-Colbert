@@ -10,6 +10,7 @@ private:
 	ProvinceTerrain* terrain_type;
 	vector<Province*> adjacent_provinces; //list of pointers to connected provinces
 	glm::vec3 rgb;
+	vector<glm::vec3> vertices;
 
 	//mesh of vertices/shape
 	//owner: reference to occupying faction
@@ -42,5 +43,8 @@ public:
 	}
 	glm::vec3 GetRGB() {
 		return rgb;
+	}
+	vector<glm::vec3>* GetVertices() {
+		return &vertices;
 	}
 };

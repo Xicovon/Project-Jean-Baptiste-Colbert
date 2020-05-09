@@ -30,9 +30,6 @@
     <ClInclude Include="targetver.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="mapLoader.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="provinceTerrain.h">
       <Filter>Game</Filter>
     </ClInclude>

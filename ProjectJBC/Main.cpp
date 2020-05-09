@@ -256,9 +256,22 @@ int main()
 	vertices.push_back(glm::vec3(1, -1, 0));
 	vertices.push_back(glm::vec3(-1, 1, 0));
 	vertices.push_back(glm::vec3(-1, -1, 0));
+
+	std::vector<unsigned int> indices;
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(2);
+	indices.push_back(3);
+	indices.push_back(4);
+
+	//indices.push_back(glm::vec3(2, 1, 0));
+	//more_vertices.push_back(glm::vec3(2, -1, 0));
 			
 	GLuint VAO;
 	GLuint vertices_VBO;
+
+	
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &vertices_VBO);
@@ -268,10 +281,30 @@ int main()
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
+
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
+	//GLuint more_VAO;
+	GLuint element_buffer;
+	glGenBuffers(1, &element_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+	//new VAO
+	//glGenVertexArrays(1, &more_VAO);
+	//glGenBuffers(1, &more_vertices_VBO);
+	//glBindVertexArray(more_VAO);
+
+	//glBindBuffer(GL_ARRAY_BUFFER, more_vertices_VBO);
+	//glBufferData(GL_ARRAY_BUFFER, more_vertices.size() * sizeof(glm::vec3), &more_vertices.front(), GL_STATIC_DRAW);
+
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
 
 	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
 
@@ -316,7 +349,18 @@ int main()
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
+		//glDrawArrays(GL_TRIANGLE_STRIP, 1, vertices.size());
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+
+		// Draw the triangles !
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			indices.size(),    // count
+			GL_UNSIGNED_INT,   // type
+			(void*)0           // element array buffer offset
+		);
+
 		glBindVertexArray(0);
 
 		// Swap the screen buffers
