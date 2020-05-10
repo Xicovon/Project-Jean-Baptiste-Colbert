@@ -14,6 +14,7 @@
 #include "shaderloader.h"
 #include "map.h"
 #include <string>
+#include <chrono>
 using namespace std;
 
 // Window dimensions
@@ -21,8 +22,8 @@ const GLuint WIDTH = 1920, HEIGHT = 1080;
 GLFWwindow *window;
 
 //Camera
-glm::vec3 cam_pos = glm::vec3(0, 2, -5);
-glm::vec3 cam_dir = glm::vec3(0, 0, 1);
+glm::vec3 cam_pos = glm::vec3(0, 0, 5);
+glm::vec3 cam_dir = glm::vec3(0, 0, -1);
 glm::vec3 cam_up = glm::vec3(0, 1, 0);
 //camera move speed
 float camera_scroll_speed = 0.3;
@@ -131,7 +132,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-	cam_pos -= glm::vec3(0, 0, (-yoffset)*2);
+	cam_pos += glm::vec3(0, 0, (-yoffset)*2);
 }
 
 void cursor_scroll(GLFWwindow* window) {
@@ -146,7 +147,7 @@ void cursor_scroll(GLFWwindow* window) {
 			//the cursor is somewhere in the edge region
 			//draw a direction vector from screen center to current cursor position
 			// destination_point - start_point = direction vector
-			glm::vec3 scroll_direction = glm::normalize(glm::vec3((WIDTH / 2) - *xpos, (HEIGHT / 2) - *ypos, 0)) * camera_scroll_speed;
+			glm::vec3 scroll_direction = glm::normalize(glm::vec3(*xpos - (WIDTH / 2), (HEIGHT / 2) - *ypos, 0)) * camera_scroll_speed;
 			//add the direction vector to the camera position to move it in the desired direction
 			cam_pos += scroll_direction;
 		}
@@ -159,24 +160,24 @@ void cursor_scroll(GLFWwindow* window) {
 		if (*xpos < 50) {
 			//move camera left
 			//translateX += glm::cross(cam_up, cam_dir);
-			translateX += glm::vec3(1, 0, 0);
+			translateX += glm::vec3(-1, 0, 0);
 		}
 		else if (*xpos > (WIDTH - 50)) {
 			//move camera right
 			//translateX -= glm::cross(cam_up, cam_dir);
-			translateX += glm::vec3(-1, 0, 0);
+			translateX += glm::vec3(1, 0, 0);
 		}
 
 		//determine how close the mouse is to the top and bottom of the screen
 		if (*ypos < 50) {
 			//move camera down
 			//translateY += cam_up;
-			translateY += glm::vec3(0, 1, 0);
+			translateY += glm::vec3(0, -1, 0);
 		}
 		else if (*ypos > (HEIGHT - 50)) {
 			//move camera up
 			//translateY -= cam_up;
-			translateY += glm::vec3(0, -1, 0);
+			translateY += glm::vec3(0, 1, 0);
 		}
 		cam_pos += camera_scroll_speed * (translateX + translateY);
 	}
@@ -246,66 +247,79 @@ int main()
 	GLuint shader = loadSHADER("vertex.shader", "fragment.shader");
 	glUseProgram(shader);
 
-	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> vertices_a;
+	std::vector<glm::vec3> vertices_b;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> UVs;
+	std::vector<unsigned int> indices_a;
+	std::vector<unsigned int> indices_b;
+
+	//load vertices/indices from map
+	//vertices = map->GetVertices();
+	//indices 
+
 	//loadOBJ("cube.obj", vertices, normals, UVs); //read the vertices from the cube.obj file
 	//loadOBJ("cat - Copy.obj", vertices, normals, UVs);
 	
-	vertices.push_back(glm::vec3(1, 1, 0));
-	vertices.push_back(glm::vec3(1, -1, 0));
-	vertices.push_back(glm::vec3(-1, 1, 0));
-	vertices.push_back(glm::vec3(-1, -1, 0));
+	vertices_a.push_back(glm::vec3(1, 1, 0));
+	vertices_a.push_back(glm::vec3(1, -1, 0));
+	vertices_a.push_back(glm::vec3(-1, 1, 0));
+	vertices_a.push_back(glm::vec3(-1, -1, 0));
 
-	std::vector<unsigned int> indices;
-	indices.push_back(0);
-	indices.push_back(1);
-	indices.push_back(2);
-	indices.push_back(2);
-	indices.push_back(3);
-	indices.push_back(4);
+	vertices_b.push_back(glm::vec3(3, 1, 0));
+	vertices_b.push_back(glm::vec3(3, -1, 0));
+	vertices_b.push_back(glm::vec3(2, 1, 0));
+	vertices_b.push_back(glm::vec3(2, -1, 0));
+
+	
+	//indices_a.push_back(0);
+	indices_a.push_back(1);
+	indices_a.push_back(2);
+	indices_a.push_back(3);
+
+	indices_b.push_back(0);
+	indices_b.push_back(1);
+	indices_b.push_back(2);
+	//indices_b.push_back(1);
+	//indices_b.push_back(2);
+	//indices_b.push_back(3);
 
 	//indices.push_back(glm::vec3(2, 1, 0));
 	//more_vertices.push_back(glm::vec3(2, -1, 0));
 			
-	GLuint VAO;
-	GLuint vertices_VBO;
+	GLuint VAO[2], VBO[4];
 
-	
+	glGenVertexArrays(2, VAO);
+	glGenBuffers(4, VBO);
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &vertices_VBO);
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAO[0]);
 
-	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
-
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+	glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
-	//GLuint more_VAO;
-	GLuint element_buffer;
-	glGenBuffers(1, &element_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
 
-	//new VAO
-	//glGenVertexArrays(1, &more_VAO);
-	//glGenBuffers(1, &more_vertices_VBO);
-	//glBindVertexArray(more_VAO);
+	
+	glBindVertexArray(VAO[1]);
 
-	//glBindBuffer(GL_ARRAY_BUFFER, more_vertices_VBO);
-	//glBufferData(GL_ARRAY_BUFFER, more_vertices.size() * sizeof(glm::vec3), &more_vertices.front(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+	glBufferData(GL_ARRAY_BUFFER, vertices_b.size() * sizeof(glm::vec3), &vertices_b.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
 
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_b.size() * sizeof(unsigned int), &indices_b.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-
-
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
 
 	glm::mat4 modl_matrix = glm::mat4(1.0f);
@@ -318,6 +332,10 @@ int main()
 
 
 	glUniformMatrix4fv(pm_loc, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+
+	//timekeeping
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	int frames = 0;
 
 	// Game loop
 	
@@ -340,7 +358,6 @@ int main()
 		glUniformMatrix4fv(mm_loc, 1, GL_FALSE, glm::value_ptr(modl_matrix));
 		
 		glfwPollEvents();
-		//glfwSetMousePos(1024 / 2, 768 / 2);
 		// Render
 		// Clear the colorbuffer
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -348,15 +365,24 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glBindVertexArray(VAO);
-		//glDrawArrays(GL_TRIANGLE_STRIP, 1, vertices.size());
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+		glBindVertexArray(VAO[0]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
 
 		// Draw the triangles !
 		glDrawElements(
 			GL_TRIANGLES,      // mode
-			indices.size(),    // count
+			indices_a.size(),  // count
+			GL_UNSIGNED_INT,   // type
+			(void*)0           // element array buffer offset
+		);
+
+		glBindVertexArray(VAO[1]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
+
+		// Draw the triangles !
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			indices_b.size(),  // count
 			GL_UNSIGNED_INT,   // type
 			(void*)0           // element array buffer offset
 		);
@@ -365,6 +391,13 @@ int main()
 
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
+
+		frames++;
+		if (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - begin).count()/1000000000 >= 1) {
+			cout << frames << " FPS" << endl;
+			frames = 0;
+			begin = std::chrono::steady_clock::now();
+		}
 	}
 
 	// Terminate GLFW, clearing any resources allocated by GLFW.
