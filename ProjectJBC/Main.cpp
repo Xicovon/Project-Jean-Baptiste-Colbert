@@ -21,6 +21,10 @@ using namespace std;
 const GLuint WIDTH = 1920, HEIGHT = 1080;
 GLFWwindow *window;
 
+//light
+GLfloat light_diffuse[] = { 1.0, 0.0, 0.0, 0.0 };
+GLfloat light_position[] = { 0.0, 0.0, 6.0, 0.0 };
+
 //Camera
 glm::vec3 cam_pos = glm::vec3(0, 0, 5);
 glm::vec3 cam_dir = glm::vec3(0, 0, -1);
@@ -276,16 +280,13 @@ int main()
 	indices_a.push_back(1);
 	indices_a.push_back(2);
 	indices_a.push_back(3);
+	indices_a.push_back(0);
+	indices_a.push_back(1);
+	indices_a.push_back(2);
 
 	indices_b.push_back(0);
 	indices_b.push_back(1);
 	indices_b.push_back(2);
-	//indices_b.push_back(1);
-	//indices_b.push_back(2);
-	//indices_b.push_back(3);
-
-	//indices.push_back(glm::vec3(2, 1, 0));
-	//more_vertices.push_back(glm::vec3(2, -1, 0));
 			
 	GLuint VAO[2], VBO[4];
 
@@ -303,6 +304,20 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(1);
+
+	GLuint color_VBO;
+	glGenBuffers(1, &color_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, color_VBO);
+
+	std::vector<glm::vec4> color_array;
+	color_array.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+	color_array.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+	color_array.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
+	color_array.push_back(glm::vec4(0.5, 0.5, 0.5, 1.0));
+
+	glBufferData(GL_ARRAY_BUFFER, color_array.size() * sizeof(glm::vec4), &color_array.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(2);
 
 	
 	glBindVertexArray(VAO[1]);
@@ -338,7 +353,6 @@ int main()
 	int frames = 0;
 
 	// Game loop
-	
 	while (!glfwWindowShouldClose(window))
 	{
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
@@ -376,18 +390,8 @@ int main()
 			(void*)0           // element array buffer offset
 		);
 
-		glBindVertexArray(VAO[1]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
-
-		// Draw the triangles !
-		glDrawElements(
-			GL_TRIANGLES,      // mode
-			indices_b.size(),  // count
-			GL_UNSIGNED_INT,   // type
-			(void*)0           // element array buffer offset
-		);
-
 		glBindVertexArray(0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
