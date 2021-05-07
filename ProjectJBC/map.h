@@ -133,7 +133,7 @@ private:
 	//this function goes to the file location and turns the .bmp into provinces that it then adds to the map object
 	void LoadMapMesh(string file_path) {
 		//load csv of province data to initialize map
-
+		cout << "Loading map from .bmp" << endl;
 
 		const size_t color_channels = 3;
 		//open bmp image to load province meshes
@@ -160,14 +160,106 @@ private:
 		glm::vec3 current_rgb = glm::vec3(0, 0, 0); 
 		glm::vec3 previous_rgb = glm::vec3(0, 0, 0);
 
+		//for each new rgb value look in list of provinces, compare province rgb value to new pixel rgb value if same send xy cords
+
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
 
-				current_rgb = glm::vec3(image[color_channels * (i * width + j) + 0], image[color_channels * (i * width + j) + 1], image[color_channels * (i * width + j) + 2]);
-				//std::cout << current_rgb.r << ", " << current_rgb.g << ", " << current_rgb.b << std::endl;
+				current_rgb = glm::vec3(image[color_channels * (j * width + i) + 0], image[color_channels * (j * width + i) + 1], image[color_channels * (j * width + i) + 2]);
+				
+				//std::cout << "Cords: " << i << ", " << j << ": " << current_rgb.r << ", " << current_rgb.g << ", " << current_rgb.b << std::endl;
+				
+				if (current_rgb != previous_rgb) {
+					//we have seen a new pixel color
+					//this pixel is an edge pixel and needs to be given to the province of the corresponding rgb
+
+					//search provinces for matching new rgb value
+					for (auto& p : provinces) {
+						//if the rgb matches
+						if (p->GetRGB() == current_rgb) {
+							p->SendEdgeVertex(glm::vec3(i, -(j), 0));
+						}
+					}
+
+					//search provinces for matching old rgb value
+					for (auto& p : provinces) {
+						//if the rgb matches
+						if (p->GetRGB() == previous_rgb) {
+							//y values are neagted
+							p->SendEdgeVertex(glm::vec3(i, -(j - 1), 0));
+						}
+					}
+
+				} else {
+					// if the pixel color has not changed tell the province of that color the pixel is in its interior
+					//search provinces for matching new rgb value
+					for (auto& p : provinces) {
+						//if the rgb matches
+						if (p->GetRGB() == current_rgb) {
+							p->SendInteriorVertex(glm::vec3(i, -(j), 0));
+						}
+					}
+				}
 
 				previous_rgb = current_rgb;
 			}
+			//system("pause");
+		}
+
+		//reset rgb values
+		current_rgb = glm::vec3(0, 0, 0);
+		previous_rgb = glm::vec3(0, 0, 0);
+
+		//do the same thing but in a perpindicular direction
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+
+				current_rgb = glm::vec3(image[color_channels * (j * width + i) + 0], image[color_channels * (j * width + i) + 1], image[color_channels * (j * width + i) + 2]);
+				
+				//std::cout << "Cords: " << i << ", " << j << ": " << current_rgb.r << ", " << current_rgb.g << ", " << current_rgb.b << std::endl;
+				
+				if (current_rgb != previous_rgb) {
+					//we have seen a new pixel color
+					//this pixel is an edge pixel and needs to be given to the province of the corresponding rgb
+
+					//search provinces for matching new rgb value
+					for (auto& p : provinces) {
+						//if the rgb matches
+						if (p->GetRGB() == current_rgb) {
+							p->SendEdgeVertex(glm::vec3(i, -j, 0));
+							break;
+						}
+					}
+
+					//search provinces for matching old rgb value
+					for (auto& p : provinces) {
+						//if the rgb matches
+						if (p->GetRGB() == previous_rgb) {
+							p->SendEdgeVertex(glm::vec3(i - 1, -j, 0));
+							break;
+						}
+					}
+
+				} else {
+					// if the pixel color has not changed tell the province of that color the pixel is in its interior
+					//search provinces for matching new rgb value
+					for ( auto& p : provinces) {
+						//if the rgb matches
+						if (p->GetRGB() == current_rgb) {
+							p->SendInteriorVertex(glm::vec3(i, -(j), 0));
+						}
+					}
+				}
+
+				previous_rgb = current_rgb;
+			}
+			//system("pause");
+		}
+
+		//tell each province to order its vertices
+		int offset = 0;
+		for (auto& p : provinces) {
+			offset += p->CreateConnectivity(offset);
 		}
 	}
 public:
@@ -178,6 +270,7 @@ public:
 	Map(string map_path) {
 		LoadProvinceTerrain(map_path + "terrain_types.csv");
 		LoadProvinces(map_path + "province_details.csv");
+		LoadMapMesh(map_path + "province_map.bmp");
 
 		cout << provinces.size() << endl;
 		for (int i = 0; i < provinces.size(); i++) {
@@ -191,4 +284,46 @@ public:
 			}
 		}
 	}
+
+	//Vertices & Connectivity & Color visibility to engine
+	vector<glm::vec3> get_map_vertice_data() {
+		//ask each province, in order, for its vertices
+		//assemble single vector of vertices, return to engine
+		vector<glm::vec3> vertices;
+
+		//for each province loop
+		for (Province* &p : provinces) {
+			//append provinces vertices to end of map veretices
+			vertices.insert(vertices.end(), p->GetVertices()->begin(), p->GetVertices()->end());
+		}
+		return vertices;
+	}
+
+	vector<unsigned int> get_map_indice_data() {
+		//ask each province, in order, for its indices
+		//assemble single vector, return to engine
+		vector<unsigned int> indices;
+
+		//for each province loop
+		for (Province*& p : provinces) {
+			//append provinces vertices to end of map veretices
+			indices.insert(indices.end(), p->GetIndices()->begin(), p->GetIndices()->end());
+		}
+		return indices;
+	}
+
+	vector<glm::vec4> get_map_color_data() {
+		//ask each province for its color to display, return to engine
+		vector<glm::vec4> color;
+
+		//for each province loop
+		for (Province*& p : provinces) {
+			cout << "Getting color vector for: " << p->GetName() << endl;
+			//append provinces vertices to end of map veretices
+			vector<glm::vec4> provinceRGB = p->GetRGBArray();
+			color.insert(color.end(), provinceRGB.begin(), provinceRGB.end());
+		}
+		return color;
+	}
+
 };

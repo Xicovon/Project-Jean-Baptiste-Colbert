@@ -1,6 +1,3 @@
-//modified from http://learnopengl.com/
-//modified from example skeleton code 2019 winter comp371
-
 #include "stdafx.h"
 #include "..\glew\glew.h"	// include GL Extension Wrangler
 #include "..\glfw\glfw3.h"	// include GLFW helper library
@@ -30,9 +27,10 @@ glm::vec3 cam_pos = glm::vec3(0, 0, 5);
 glm::vec3 cam_dir = glm::vec3(0, 0, -1);
 glm::vec3 cam_up = glm::vec3(0, 1, 0);
 //camera move speed
-float camera_scroll_speed = 0.3;
+float camera_scroll_speed = 5.0;
 float edge_scroll_region = 50; //in pixels
 bool camera_scroll_continuous = true;
+bool enable_edge_scroll = false;
 
 //module path
 string module_path = "E:\\Project-Jean-Baptiste-Colbert\\Modules\\Native\\";
@@ -40,10 +38,7 @@ string module_path = "E:\\Project-Jean-Baptiste-Colbert\\Modules\\Native\\";
 //Model
 glm::vec3 transl = glm::vec3(0, 0, 0);
 
-//rotation angles
-int rotateX = 0;
-int rotateY = 0;
-int rotateZ = 0;
+
 //used to track the mouse position for zoom
 double xInit, yInit;
 //used to track if mouse buttun is pressed
@@ -52,8 +47,13 @@ bool drag = false;
 float cam_rotZ = 0;
 //the rotation angle of the camera about its x axis
 float cam_rotX = 0;
-//the scale of the object
-float scale = 1;
+
+
+//TODO:
+std::vector<glm::vec4> color_array_a;
+GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
+
+//**** CALLBACK FUNCTIONS ****//
 
 // Is called whenever a key is pressed/released via GLFW
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -62,69 +62,34 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_ESCAPE) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
-	if (key == GLFW_KEY_W && action == GLFW_PRESS) {
-		cam_pos += cam_dir;
+	if ((key == GLFW_KEY_W || key == GLFW_KEY_UP) && action == GLFW_PRESS) {
+		cam_pos += camera_scroll_speed * cam_up;
+
+		/* TODO: note: code to modify color buffers at runtime.
+		color_array_a.clear();
+		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+		glBindBuffer(GL_ARRAY_BUFFER, cVBO[0]);
+		glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
+		*/
 	}
-	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-		cam_pos -= cam_dir;
+	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
+		cam_pos -= camera_scroll_speed * cam_up;
 	}
-	if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-		cam_pos += glm::cross(cam_up, cam_dir);
+	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
+		cam_pos -= camera_scroll_speed * cam_up;
 	}
-	if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-		cam_pos -= glm::cross(cam_up, cam_dir);
+	if ((key == GLFW_KEY_A || key == GLFW_KEY_LEFT) && action == GLFW_PRESS) {
+		cam_pos += camera_scroll_speed * glm::cross(cam_up, cam_dir);
 	}
-	if (key == GLFW_KEY_I && action == GLFW_PRESS) {
-		transl.y += 1;
-	}
-	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
-		transl.y -= 1;
-	}
-	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
-		transl.x += 1;
-	}
-	if (key == GLFW_KEY_L && action == GLFW_PRESS) {
-		transl.x -= 1;
-	}
-	if (key == GLFW_KEY_PAGE_UP && action == GLFW_PRESS) {
-		transl.z += 1;
-	}
-	if (key == GLFW_KEY_PAGE_DOWN && action == GLFW_PRESS) {
-		transl.z -= 1;
-	}
-	if (key == GLFW_KEY_B && action == GLFW_PRESS) {
-		rotateX += 10;
-	}
-	if (key == GLFW_KEY_N && action == GLFW_PRESS) {
-		rotateY += 10;
-	}
-	if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-		rotateZ += 10;
-	}
-	if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
-		cam_rotZ += 0.174533; //10 degrees in radians
-		cam_dir = glm::vec3(sin(cam_rotZ)*cos(cam_rotX), sin(cam_rotX), cos(cam_rotZ)*cos(cam_rotX)); // I spent 3 hours drawing circles to come up with this
-	}
-	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-		cam_rotZ -= 0.174533;
-		cam_dir = glm::vec3(sin(cam_rotZ)*cos(cam_rotX), sin(cam_rotX), cos(cam_rotZ)*cos(cam_rotX));
-	}
-	if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
-		cam_rotX += 0.174533;
-		cam_dir = glm::vec3(sin(cam_rotZ)*cos(cam_rotX), sin(cam_rotX), cos(cam_rotZ)*cos(cam_rotX));
-	}
-	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
-		cam_rotX -= 0.174533;
-		cam_dir = glm::vec3(sin(cam_rotZ)*cos(cam_rotX), sin(cam_rotX), cos(cam_rotZ)*cos(cam_rotX));
-	}
-	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
-		scale = scale * 1.1;
-	}
-	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
-		scale = scale * 0.9;
+	if ((key == GLFW_KEY_D || key == GLFW_KEY_RIGHT) && action == GLFW_PRESS) {
+		cam_pos -= camera_scroll_speed * glm::cross(cam_up, cam_dir);
 	}
 }
-//https://www.glfw.org/docs/latest/input_guide.html#input_mouse_button
+
+//www.glfw.org/docs/latest/input_guide.html#input_mouse_button
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		//sets the initial position of the mouse
@@ -135,6 +100,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		drag = false;
 	}
 }
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	cam_pos += glm::vec3(0, 0, (-yoffset)*2);
 }
@@ -144,48 +110,52 @@ void cursor_scroll(GLFWwindow* window) {
 	double* ypos = new double -1;
 	glfwGetCursorPos(window, xpos, ypos);
 
-	//which type of camera movement is being used
-	if (camera_scroll_continuous) {
-		//determine if the cursor is within n units of the screen border
-		if (*xpos < edge_scroll_region || *ypos < edge_scroll_region || *ypos >(HEIGHT - edge_scroll_region) || *xpos >(WIDTH - edge_scroll_region)) {
-			//the cursor is somewhere in the edge region
-			//draw a direction vector from screen center to current cursor position
-			// destination_point - start_point = direction vector
-			glm::vec3 scroll_direction = glm::normalize(glm::vec3(*xpos - (WIDTH / 2), (HEIGHT / 2) - *ypos, 0)) * camera_scroll_speed;
-			//add the direction vector to the camera position to move it in the desired direction
-			cam_pos += scroll_direction;
-		}
-	}
-	else {
-		//determine how close the mouse is to the left and right side of the screen
-		glm::vec3 translateX = glm::vec3(0, 0, 0);
-		glm::vec3 translateY = glm::vec3(0, 0, 0);
+	if (enable_edge_scroll) {
+		//which type of camera movement is being used
+		if (camera_scroll_continuous) {
+			//determine if the cursor is within n units of the screen border
+			if (*xpos < edge_scroll_region || *ypos < edge_scroll_region || *ypos >(HEIGHT - edge_scroll_region) || *xpos >(WIDTH - edge_scroll_region)) {
+				//the cursor is somewhere in the edge region
+				//draw a direction vector from screen center to current cursor position
+				// destination_point - start_point = direction vector
+				glm::vec3 scroll_direction = glm::normalize(glm::vec3(*xpos - (WIDTH / 2), (HEIGHT / 2) - *ypos, 0)) * camera_scroll_speed;
+				//add the direction vector to the camera position to move it in the desired direction
 
-		if (*xpos < 50) {
-			//move camera left
-			//translateX += glm::cross(cam_up, cam_dir);
-			translateX += glm::vec3(-1, 0, 0);
-		}
-		else if (*xpos > (WIDTH - 50)) {
-			//move camera right
-			//translateX -= glm::cross(cam_up, cam_dir);
-			translateX += glm::vec3(1, 0, 0);
-		}
+				cam_pos += scroll_direction;
+			}
+		}else {
+			//determine how close the mouse is to the left and right side of the screen
+			glm::vec3 translateX = glm::vec3(0, 0, 0);
+			glm::vec3 translateY = glm::vec3(0, 0, 0);
 
-		//determine how close the mouse is to the top and bottom of the screen
-		if (*ypos < 50) {
-			//move camera down
-			//translateY += cam_up;
-			translateY += glm::vec3(0, -1, 0);
+			if (*xpos < 50) {
+				//move camera left
+				//translateX += glm::cross(cam_up, cam_dir);
+				translateX += glm::vec3(-1, 0, 0);
+			}
+			else if (*xpos > (WIDTH - 50)) {
+				//move camera right
+				//translateX -= glm::cross(cam_up, cam_dir);
+				translateX += glm::vec3(1, 0, 0);
+			}
+
+			//determine how close the mouse is to the top and bottom of the screen
+			if (*ypos < 50) {
+				//move camera down
+				//translateY += cam_up;
+				translateY += glm::vec3(0, -1, 0);
+			}
+			else if (*ypos > (HEIGHT - 50)) {
+				//move camera up
+				//translateY -= cam_up;
+				translateY += glm::vec3(0, 1, 0);
+			}
+			cam_pos += camera_scroll_speed * (translateX + translateY);
 		}
-		else if (*ypos > (HEIGHT - 50)) {
-			//move camera up
-			//translateY -= cam_up;
-			translateY += glm::vec3(0, 1, 0);
-		}
-		cam_pos += camera_scroll_speed * (translateX + translateY);
 	}
 }
+
+//**** END CALLBACK FUNCTIONS ****//
 
 int init() {
 	std::cout << "Starting GLFW context, OpenGL 4.3" << std::endl;
@@ -223,10 +193,12 @@ int init() {
 // The MAIN function, from here we start the application and run the game loop
 int main()
 {
+	//initialize game engine
 	if (init() != 0) {
 		return EXIT_FAILURE;
 	}
 	
+	//initialize game map
 	string map_path = module_path + "Map\\";
 	Map* map = new Map(map_path);
 	cout << "Map Load Complete" << endl;
@@ -253,11 +225,12 @@ int main()
 
 	std::vector<glm::vec3> vertices_a;
 	std::vector<glm::vec3> vertices_b;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::vec2> UVs;
+	//std::vector<glm::vec3> normals;
+	//std::vector<glm::vec2> UVs;
 	std::vector<unsigned int> indices_a;
 	std::vector<unsigned int> indices_b;
 
+	//TODO: Remove old COMP 371 code
 	//load vertices/indices from map
 	//vertices = map->GetVertices();
 	//indices 
@@ -265,10 +238,18 @@ int main()
 	//loadOBJ("cube.obj", vertices, normals, UVs); //read the vertices from the cube.obj file
 	//loadOBJ("cat - Copy.obj", vertices, normals, UVs);
 	
-	vertices_a.push_back(glm::vec3(1, 1, 0));
-	vertices_a.push_back(glm::vec3(1, -1, 0));
-	vertices_a.push_back(glm::vec3(-1, 1, 0));
-	vertices_a.push_back(glm::vec3(-1, -1, 0));
+	//ask map for vertices and indices.
+	vertices_a = map->get_map_vertice_data();
+	cout << "Vertices_a size: " << vertices_a.size() << endl;
+	
+	color_array_a = map->get_map_color_data();
+	cout << "color_array_a size: " << color_array_a.size() << endl;
+
+	//removed to test map vertices
+	//vertices_a.push_back(glm::vec3(1, 1, 0));
+	//vertices_a.push_back(glm::vec3(1, -1, 0));
+	//vertices_a.push_back(glm::vec3(-1, 1, 0));
+	//vertices_a.push_back(glm::vec3(-1, -1, 0));
 
 	vertices_b.push_back(glm::vec3(3, 1, 0));
 	vertices_b.push_back(glm::vec3(3, -1, 0));
@@ -277,18 +258,22 @@ int main()
 
 	
 	//indices_a.push_back(0);
-	indices_a.push_back(1);
-	indices_a.push_back(2);
-	indices_a.push_back(3);
-	indices_a.push_back(0);
-	indices_a.push_back(1);
-	indices_a.push_back(2);
+	//indices_a.push_back(1);
+	//indices_a.push_back(2);
+	//indices_a.push_back(3);
+	//indices_a.push_back(0);
+	//indices_a.push_back(1);
+	//indices_a.push_back(2);
 
 	indices_b.push_back(0);
 	indices_b.push_back(1);
 	indices_b.push_back(2);
-			
-	GLuint VAO[2], VBO[4];
+	indices_b.push_back(2);
+	indices_b.push_back(1);
+	indices_b.push_back(3);
+	
+	//defined outside main function now
+	//GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
 
 	glGenVertexArrays(2, VAO);
 	glGenBuffers(4, VBO);
@@ -300,22 +285,25 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
 
-	GLuint color_VBO;
-	glGenBuffers(1, &color_VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, color_VBO);
+	//ignore indices for loop test
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(1);
 
-	std::vector<glm::vec4> color_array;
-	color_array.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-	color_array.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
-	color_array.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
-	color_array.push_back(glm::vec4(0.5, 0.5, 0.5, 1.0));
+	//GLuint color_VBO;
+	glGenBuffers(1, &cVBO[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, cVBO[0]);
 
-	glBufferData(GL_ARRAY_BUFFER, color_array.size() * sizeof(glm::vec4), &color_array.front(), GL_STATIC_DRAW);
+	//colors are retrieved from provinces
+	//std::vector<glm::vec4> color_array_a;
+	//color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+	//color_array_a.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+	//color_array_a.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
+	//color_array_a.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
+
+	glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
@@ -331,6 +319,21 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_b.size() * sizeof(unsigned int), &indices_b.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(1);
+
+	//color for second object
+	//GLuint color_VBO;
+	glGenBuffers(1, &cVBO[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, cVBO[1]);
+
+	std::vector<glm::vec4> color_array_b;
+	color_array_b.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+	color_array_b.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+	color_array_b.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
+	color_array_b.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
+
+	glBufferData(GL_ARRAY_BUFFER, color_array_b.size() * sizeof(glm::vec4), &color_array_b.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(2);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -362,6 +365,14 @@ int main()
 		glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
 		glUniformMatrix4fv(vm_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
+		//Variables for model matrix
+		//rotation angles
+		int rotateX = 0;
+		int rotateY = 0;
+		int rotateZ = 0;
+		//the scale of the object
+		float scale = 1;
+
 		//rotates the object
 		glm::mat4 rotator = glm::rotate(glm::mat4(1.0f), rotateX / 180.f, glm::vec3(1, 0, 0));
 		rotator = rotator * glm::rotate(glm::mat4(1.0f), rotateY / 180.f, glm::vec3(0, 1, 0));
@@ -382,17 +393,34 @@ int main()
 		glBindVertexArray(VAO[0]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
 
+
+		glDrawArrays(GL_LINE_LOOP, 0, vertices_a.size());
+
+		//triangle draw call
+		// Draw the triangles !
+		//glDrawElements(
+		//	GL_TRIANGLES,      // mode
+		//	indices_a.size(),  // count
+		//	GL_UNSIGNED_INT,   // type
+		//	(void*)0           // element array buffer offset
+		//);
+
+		/*
+		glBindVertexArray(VAO[1]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
+
 		// Draw the triangles !
 		glDrawElements(
 			GL_TRIANGLES,      // mode
-			indices_a.size(),  // count
+			indices_b.size(),  // count
 			GL_UNSIGNED_INT,   // type
 			(void*)0           // element array buffer offset
 		);
+		*/
 
 		glBindVertexArray(0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
+		
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
 
