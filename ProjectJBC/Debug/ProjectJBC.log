@@ -1,8 +1,7 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(491,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (COMP371.vcxproj, COMP371_Lab3.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Main.cpp
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\province.h(29,21): warning C4018: '<': signed/unsigned mismatch
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\province.h(94,21): warning C4018: '<': signed/unsigned mismatch
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\map.h(257,21): warning C4018: '<': signed/unsigned mismatch
-E:\Project-Jean-Baptiste-Colbert\ProjectJBC\Main.cpp(30,32): warning C4305: 'initializing': truncation from 'double' to 'float'
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\province.h(31,21): warning C4018: '<': signed/unsigned mismatch
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\province.h(114,21): warning C4018: '<': signed/unsigned mismatch
+E:\Project-Jean-Baptiste-Colbert\ProjectJBC\map.h(276,21): warning C4018: '<': signed/unsigned mismatch
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/FORCE' specification
   ProjectJBC.vcxproj -> E:\Project-Jean-Baptiste-Colbert\Debug\ProjectJBC.exe
