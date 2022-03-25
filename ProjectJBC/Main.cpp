@@ -12,6 +12,8 @@
 #include "map.h"
 #include <string>
 #include <chrono>
+#include <cmath>
+# define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
 
 // Window dimensions
@@ -26,6 +28,9 @@ GLfloat light_position[] = { 0.0, 0.0, 6.0, 0.0 };
 glm::vec3 cam_pos = glm::vec3(0, 0, 5);
 glm::vec3 cam_dir = glm::vec3(0, 0, -1);
 glm::vec3 cam_up = glm::vec3(0, 1, 0);
+double xpos_old = 0;
+double ypos_old = 0;
+glm::mat4 view_matrix;
 //camera move speed
 float camera_scroll_speed = 5.0;
 float edge_scroll_region = 50; //in pixels
@@ -53,6 +58,8 @@ float cam_rotX = 0;
 std::vector<glm::vec4> color_array_a;
 GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
 
+std::vector<glm::vec3> vertices_a;
+
 //**** CALLBACK FUNCTIONS ****//
 
 // Is called whenever a key is pressed/released via GLFW
@@ -78,14 +85,25 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
 		cam_pos -= camera_scroll_speed * cam_up;
 	}
-	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
-		cam_pos -= camera_scroll_speed * cam_up;
-	}
 	if ((key == GLFW_KEY_A || key == GLFW_KEY_LEFT) && action == GLFW_PRESS) {
 		cam_pos += camera_scroll_speed * glm::cross(cam_up, cam_dir);
 	}
 	if ((key == GLFW_KEY_D || key == GLFW_KEY_RIGHT) && action == GLFW_PRESS) {
 		cam_pos -= camera_scroll_speed * glm::cross(cam_up, cam_dir);
+	}
+	if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+		float radius = 1000 / (2 * M_PI);
+		for (int i = 0; i < vertices_a.size(); i++) {
+			float theta_x = (vertices_a[i].x / 1000) * 360;
+			float theta_y = (vertices_a[i].y / 1000) * 360;
+
+			vertices_a[i].x = sin(theta_x) * sin(theta_y);
+			vertices_a[i].y = cos(theta_x);
+			vertices_a[i].z = sin(theta_x) * cos(theta_y);
+
+		}
+		glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+		glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
 	}
 }
 
@@ -155,6 +173,25 @@ void cursor_scroll(GLFWwindow* window) {
 	}
 }
 
+void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (xpos_old == 0) {
+		xpos_old = xpos;
+		ypos_old = ypos;
+	}
+	float dx = xpos - xpos_old;
+	float dy = ypos - ypos_old;
+
+	glm::vec3  cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+	cam_dir += cam_right * (dx / 100.f);
+	cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+	cam_dir -= cam_up * (dy / 100.f);
+	cam_up = glm::normalize(glm::cross(cam_dir, -cam_right));
+
+	cam_dir = glm::normalize(cam_dir);
+
+	xpos_old = xpos;
+	ypos_old = ypos;
+}
 //**** END CALLBACK FUNCTIONS ****//
 
 int init() {
@@ -203,6 +240,8 @@ int main()
 	Map* map = new Map(map_path);
 	cout << "Map Load Complete" << endl;
 
+	glfwSetCursorPosCallback(window, cursor_callback);
+	glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -223,27 +262,27 @@ int main()
 	GLuint shader = loadSHADER("vertex.shader", "fragment.shader");
 	glUseProgram(shader);
 
-	std::vector<glm::vec3> vertices_a;
+	
 	std::vector<glm::vec3> vertices_b;
 	//std::vector<glm::vec3> normals;
 	//std::vector<glm::vec2> UVs;
 	std::vector<unsigned int> indices_a;
 	std::vector<unsigned int> indices_b;
-
-	//TODO: Remove old COMP 371 code
-	//load vertices/indices from map
-	//vertices = map->GetVertices();
-	//indices 
-
-	//loadOBJ("cube.obj", vertices, normals, UVs); //read the vertices from the cube.obj file
-	//loadOBJ("cat - Copy.obj", vertices, normals, UVs);
 	
 	//ask map for vertices and indices.
-	vertices_a = map->get_map_vertice_data();
+	//vertices_a = map->get_map_vertice_data();
+
 	cout << "Vertices_a size: " << vertices_a.size() << endl;
 	
-	color_array_a = map->get_map_color_data();
+	//color_array_a = map->get_map_color_data();
 	cout << "color_array_a size: " << color_array_a.size() << endl;
+
+	for (int i = 0; i < 1000; i++) {
+		for (int j = 0; j < 1000; j++) {
+			vertices_a.push_back(glm::vec3(i, j, 0));
+			color_array_a.push_back(glm::vec4(i/1000.0, 0.5, j/1000.0, 1.0));
+		}
+	}
 
 	//removed to test map vertices
 	//vertices_a.push_back(glm::vec3(1, 1, 0));
@@ -394,7 +433,8 @@ int main()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
 
 
-		glDrawArrays(GL_LINE_LOOP, 0, vertices_a.size());
+		//glDrawArrays(GL_LINE_LOOP, 0, vertices_a.size());
+		glDrawArrays(GL_POINTS, 0, vertices_a.size());
 
 		//triangle draw call
 		// Draw the triangles !
