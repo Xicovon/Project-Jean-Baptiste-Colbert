@@ -32,10 +32,11 @@ double xpos_old = 0;
 double ypos_old = 0;
 glm::mat4 view_matrix;
 //camera move speed
-float camera_scroll_speed = 5.0;
+float camera_scroll_speed = 1.0;
 float edge_scroll_region = 50; //in pixels
+float mouse_scroll_speed = 4.0;
 bool camera_scroll_continuous = true;
-bool enable_edge_scroll = false;
+bool enable_edge_scroll = true;
 
 //module path
 string module_path = "E:\\Project-Jean-Baptiste-Colbert\\Modules\\Native\\";
@@ -53,12 +54,85 @@ float cam_rotZ = 0;
 //the rotation angle of the camera about its x axis
 float cam_rotX = 0;
 
+glm::vec3 debug_line = glm::vec3(0, 0, 1);
+
+glm::vec3 debug_a = glm::vec3(0, 0, 0);
+glm::vec3 debug_b = glm::vec3(0, 0, 0);
+
 
 //TODO:
 std::vector<glm::vec4> color_array_a;
 GLuint VAO, VBO[2], cVBO[2]; //cVBO Color VBO
 
 std::vector<glm::vec3> vertices_a;
+
+vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
+	float height = width / 2;
+	float radius = width / (2 * M_PI);
+
+	vector<glm::vec3> new_vertices;
+
+	for each (glm::vec3 v in vertices)
+	{
+		float longitude = (v.x / (radius * cos(0))) + 0;
+		float latitude = ((v.y) / radius) + 0;
+
+		//longitude = longitude * M_PI / 180;
+		//latitude = latitude * M_PI / 180;
+
+		float x = radius * cos(longitude) * sin(latitude);
+		float y = radius * sin(longitude) * sin(latitude);
+		float z = radius * cos(latitude);
+		new_vertices.push_back(glm::vec3(x, y, -z));
+		//cout << "x:" << v.x << " y:" << v.y << " z:" << v.z << endl;
+	}
+
+	return new_vertices;
+}
+
+//TODO: fix
+bool CalculatePlaneIntersection(glm::vec3* contact, glm::vec3 rayOrigin, glm::vec3 ray) {
+	glm::vec3 normal = glm::vec3(0, 0, 1);
+
+	// get d value
+	float d = glm::dot(normal, glm::vec3(100,50,0));
+
+	if (glm::dot(normal, ray) == 0) {
+		return false; // No intersection, the line is parallel to the plane
+	}
+
+	// Compute the X value for the directed line ray intersecting the plane
+	float x = (d - glm::dot(normal, rayOrigin)) / glm::dot(normal, ray);
+
+	// output contact point
+	*contact = rayOrigin + normalize(ray) * x; //Make sure your ray vector is normalized
+	return true;
+}
+
+//TODO: fix
+void CalculatePointerIntersection(double xInit, double yInit) {
+	// check if cursor intersects object
+	cout << "x:" << cam_dir.x << " y:" << cam_dir.y << " z:" << cam_dir.z << endl;
+
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+
+	float mouseX = xInit / (width * 0.5f) - 1.0f;
+	float mouseY = yInit / (height * 0.5f) - 1.0f;
+
+	glm::mat4 proj = glm::perspective(45.f, 1.f, 0.1f, 1000.f);
+	//glm::mat4 view = glm::lookAt(glm::vec3(0.0f), CameraDirection, CameraUpVector);
+
+	glm::mat4 invVP = glm::inverse(proj * view_matrix);
+	glm::vec4 screenPos = glm::vec4(mouseX, -mouseY, 1.0f, 1.0f);
+	glm::vec4 worldPos = invVP * screenPos;
+
+	glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
+
+	glm::vec3* contact = new glm::vec3(0,0,0);
+	cout << CalculatePlaneIntersection(contact, cam_pos, dir);
+	cout << "x:" << contact->x << " y:" << contact->y << " z:" << contact->z << endl;
+}
 
 //**** CALLBACK FUNCTIONS ****//
 
@@ -113,6 +187,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		//sets the initial position of the mouse
 		glfwGetCursorPos(window, &xInit, &yInit);
 		drag = true;
+
+		CalculatePointerIntersection(xInit, yInit);
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		drag = false;
@@ -120,7 +196,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-	cam_pos += glm::vec3(0, 0, (-yoffset)*2);
+	cam_pos += glm::vec3(0, 0, (-yoffset)*mouse_scroll_speed);
 }
 
 void cursor_scroll(GLFWwindow* window) {
@@ -194,6 +270,21 @@ void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 //**** END CALLBACK FUNCTIONS ****//
 
+void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices) {
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
+
+	glDrawElements(
+		GL_TRIANGLES,      // mode
+		indices.size(),    // count
+		GL_UNSIGNED_INT,   // type
+		(void*)0           // element array buffer offset
+	);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
 int init() {
 	std::cout << "Starting GLFW context, OpenGL 4.3" << std::endl;
 	glfwInit();
@@ -263,24 +354,17 @@ int main()
 	glUseProgram(shader);
 
 	
-	std::vector<glm::vec3> vertices_b;
 	//std::vector<glm::vec3> normals;
 	//std::vector<glm::vec2> UVs;
 	std::vector<unsigned int> indices_a;
-	std::vector<unsigned int> indices_b;
 	
 	//ask map for vertices and indices.
 	vertices_a = map->get_map_vertice_data();
 
-	cout << "Vertices_a size: " << vertices_a.size() << endl;
+	vertices_a = ConvertToSphere(vertices_a, 200);
 
 	indices_a = map->get_map_indice_data();
-	
-
-	cout << "Vertices_a size: " << vertices_a.size() << endl;
-	
 	color_array_a = map->get_map_color_data();
-	cout << "color_array_a size: " << color_array_a.size() << endl;
 	
 	//defined outside main function now
 	//GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
@@ -295,17 +379,10 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(1);
-
-
-	//ignore indices for loop test
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
 
 	//GLuint color_VBO;
 	glGenBuffers(1, &cVBO[0]);
@@ -314,35 +391,6 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
-
-	
-	//glBindVertexArray(VAO[1]);
-
-	//glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-	//glBufferData(GL_ARRAY_BUFFER, vertices_b.size() * sizeof(glm::vec3), &vertices_b.front(), GL_STATIC_DRAW);
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(0);
-
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_b.size() * sizeof(unsigned int), &indices_b.front(), GL_STATIC_DRAW);
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(1);
-
-	//color for second object
-	//GLuint color_VBO;
-	//glGenBuffers(1, &cVBO[1]);
-	//glBindBuffer(GL_ARRAY_BUFFER, cVBO[1]);
-
-	//std::vector<glm::vec4> color_array_b;
-	//color_array_b.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-	//color_array_b.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
-	//color_array_b.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
-	//color_array_b.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
-
-	//glBufferData(GL_ARRAY_BUFFER, color_array_b.size() * sizeof(glm::vec4), &color_array_b.front(), GL_STATIC_DRAW);
-	//glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(2);
-
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -398,37 +446,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
-
-
-		//glDrawArrays(GL_LINE_LOOP, 0, vertices_a.size());
-		glDrawArrays(GL_POINTS, 0, vertices_a.size());
-
-		//triangle draw call
-		// Draw the triangles !
-		//glDrawElements(
-		//	GL_TRIANGLES,      // mode
-		//	indices_a.size(),  // count
-		//	GL_UNSIGNED_INT,   // type
-		//	(void*)0           // element array buffer offset
-		//);
-
-		/*
-		glBindVertexArray(VAO[1]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
-
-		// Draw the triangles !
-		glDrawElements(
-			GL_TRIANGLES,      // mode
-			indices_b.size(),  // count
-			GL_UNSIGNED_INT,   // type
-			(void*)0           // element array buffer offset
-		);
-		*/
-
-		glBindVertexArray(0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		Draw(VAO, VBO[1], indices_a); //draw planet map
 		
 		// Swap the screen buffers
 		glfwSwapBuffers(window);

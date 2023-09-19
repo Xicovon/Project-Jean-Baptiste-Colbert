@@ -17,6 +17,8 @@ private:
 	string name;
 	vector<Province*> provinces;
 	vector<ProvinceTerrain*> terrain_types;
+	vector<glm::vec3> vertices;
+	vector<unsigned int> indices;
 	//shape (rectangle/sphere)
 
 	//function loads csv from file into list of terrain types
@@ -156,111 +158,103 @@ private:
 			exit(1);
 		}
 
-		glm::vec3 current_rgb = glm::vec3(0, 0, 0); 
-		glm::vec3 previous_rgb = glm::vec3(0, 0, 0);
+		glm::vec3 rgb = glm::vec3(0, 0, 0);
 
-		//for each new rgb value look in list of provinces, compare province rgb value to new pixel rgb value if same send xy cords
-
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-
-				current_rgb = glm::vec3(image[color_channels * (j * width + i) + 0], image[color_channels * (j * width + i) + 1], image[color_channels * (j * width + i) + 2]);
-				
-				//std::cout << "Cords: " << i << ", " << j << ": " << current_rgb.r << ", " << current_rgb.g << ", " << current_rgb.b << std::endl;
-				
-				if (current_rgb != previous_rgb) {
-					//we have seen a new pixel color
-					//this pixel is an edge pixel and needs to be given to the province of the corresponding rgb
-
-					//search provinces for matching new rgb value
-					for (auto& p : provinces) {
-						//if the rgb matches
-						if (p->GetRGB() == current_rgb) {
-							p->SendEdgeVertex(glm::vec3(i, -(j), 0));
-						}
-					}
-
-					//search provinces for matching old rgb value
-					for (auto& p : provinces) {
-						//if the rgb matches
-						if (p->GetRGB() == previous_rgb) {
-							//y values are neagted
-							p->SendEdgeVertex(glm::vec3(i, -(j - 1), 0));
-						}
-					}
-
-				} else {
-					// if the pixel color has not changed tell the province of that color the pixel is in its interior
-					//search provinces for matching new rgb value
-					for (auto& p : provinces) {
-						//if the rgb matches
-						if (p->GetRGB() == current_rgb) {
-							p->SendInteriorVertex(glm::vec3(i, -(j), 0));
-						}
-					}
-				}
-
-				previous_rgb = current_rgb;
-			}
-			//system("pause");
-		}
-
-		//reset rgb values
-		current_rgb = glm::vec3(0, 0, 0);
-		previous_rgb = glm::vec3(0, 0, 0);
-
-		//do the same thing but in a perpindicular direction
+		// Create vertices
 		for (int j = 0; j < height; j++) {
 			for (int i = 0; i < width; i++) {
+				rgb = glm::vec3(image[color_channels * (j * width + i) + 0], image[color_channels * (j * width + i) + 1], image[color_channels * (j * width + i) + 2]);
+				glm::vec3 vertex = glm::vec3(i, -(j), 0);
 
-				current_rgb = glm::vec3(image[color_channels * (j * width + i) + 0], image[color_channels * (j * width + i) + 1], image[color_channels * (j * width + i) + 2]);
-				
-				//std::cout << "Cords: " << i << ", " << j << ": " << current_rgb.r << ", " << current_rgb.g << ", " << current_rgb.b << std::endl;
-				
-				if (current_rgb != previous_rgb) {
-					//we have seen a new pixel color
-					//this pixel is an edge pixel and needs to be given to the province of the corresponding rgb
+				Province* p = GetProvinceByRGB(rgb);
+				p->AddVertex(vertex);
+			}
+		}
 
-					//search provinces for matching new rgb value
-					for (auto& p : provinces) {
-						//if the rgb matches
-						if (p->GetRGB() == current_rgb) {
-							p->SendEdgeVertex(glm::vec3(i, -j, 0));
-							break;
-						}
-					}
+		// Combine all province vertex vectors
+		CollateProvinceVertexData();
 
-					//search provinces for matching old rgb value
-					for (auto& p : provinces) {
-						//if the rgb matches
-						if (p->GetRGB() == previous_rgb) {
-							p->SendEdgeVertex(glm::vec3(i - 1, -j, 0));
-							break;
-						}
-					}
+		int a, b, c, d;
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				//     c - x - x
+				//     | \ | \ |
+				//     a - b - x
+				//     | \ | \ |
+				//     x - d - x
+				// create triangles: a-b-c & a-b-d
+				//cout << "A" << endl;
+				a = FindVertex(glm::vec3(i, -(j), 0));
 
-				} else {
-					// if the pixel color has not changed tell the province of that color the pixel is in its interior
-					//search provinces for matching new rgb value
-					for ( auto& p : provinces) {
-						//if the rgb matches
-						if (p->GetRGB() == current_rgb) {
-							p->SendInteriorVertex(glm::vec3(i, -(j), 0));
-						}
-					}
+				//does vertex b exist?
+				if (i == width - 1) {
+					continue;
+				}
+				else {
+					//cout << "B" << endl;
+					b = FindVertex(glm::vec3(i + 1, -j, 0));
 				}
 
-				previous_rgb = current_rgb;
-			}
-			//system("pause");
-		}
+				//does vertex c exist?
+				if (j != height - 1) {
+					//cout << "C" << endl;
+					c = FindVertex(glm::vec3(i, -(j + 1), 0));
 
-		//tell each province to order its vertices
-		int offset = 0;
-		for (auto& p : provinces) {
-			offset += p->CreateConnectivity(offset);
+					//create triangle C
+					indices.push_back(a);
+					indices.push_back(b);
+					indices.push_back(c);
+				}
+
+				//does vertex d exist?
+				if (j != 0) {
+					//cout << "D" << endl;
+					d = FindVertex(glm::vec3(i + 1, -(j - 1), 0));
+
+					//create triangle D
+					indices.push_back(a);
+					indices.push_back(b);
+					indices.push_back(d);
+				}
+			}
 		}
 	}
+	Province* GetProvinceByRGB(glm::vec3 rgb) {
+		for (auto& p : provinces) {
+			if (p->GetRGB() == rgb) {
+				return p;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void CollateProvinceVertexData() {
+		//ask each province, in order, for its vertices
+		//assemble single vector of vertices, return to engine
+
+		//for each province loop
+		for (Province*& p : provinces) {
+			//append provinces vertices to end of map veretices
+			vertices.insert(vertices.end(), p->GetVertices()->begin(), p->GetVertices()->end());
+		}
+	}
+
+	int FindVertex(glm::vec3 vertex) {
+		int i = std::distance(vertices.begin(), std::find(vertices.begin(), vertices.end(), vertex));
+
+		if (std::find(vertices.begin(), vertices.end(), vertex) == vertices.end()) {
+			cout << "VERTEX NOT FOUND" << endl;
+			cout << "x:" << vertex.x << ", y:" << vertex.y << ", z:" << vertex.z << endl;
+
+			cout << vertices.size() << endl;
+
+			system("pause");
+		}
+
+		return i;
+	}
+
 public:
 	Map() {
 		name = "default";
@@ -286,28 +280,10 @@ public:
 
 	//Vertices & Connectivity & Color visibility to engine
 	vector<glm::vec3> get_map_vertice_data() {
-		//ask each province, in order, for its vertices
-		//assemble single vector of vertices, return to engine
-		vector<glm::vec3> vertices;
-
-		//for each province loop
-		for (Province* &p : provinces) {
-			//append provinces vertices to end of map veretices
-			vertices.insert(vertices.end(), p->GetVertices()->begin(), p->GetVertices()->end());
-		}
 		return vertices;
 	}
 
 	vector<unsigned int> get_map_indice_data() {
-		//ask each province, in order, for its indices
-		//assemble single vector, return to engine
-		vector<unsigned int> indices;
-
-		//for each province loop
-		for (Province*& p : provinces) {
-			//append provinces indices to end of map indices
-			indices.insert(indices.end(), p->GetIndices()->begin(), p->GetIndices()->end());
-		}
 		return indices;
 	}
 
@@ -324,5 +300,7 @@ public:
 		}
 		return color;
 	}
-
+	vector<glm::vec3>* GetVertices() {
+		return &vertices;
+	}
 };
