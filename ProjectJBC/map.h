@@ -77,8 +77,7 @@ private:
 		int line_number = 0;
 		string line;
 		while (getline(input_file, line)) {
-			if (++line_number != 1) {
-				//if the line is not the header, then create a new province
+			if (++line_number != 1) { //if the line is not the header, then create a new province
 				int id = -1;
 				string name = "Default Province";
 				int terrain_id = -1;
@@ -270,9 +269,9 @@ public:
 	Map(string map_path) {
 		LoadProvinceTerrain(map_path + "terrain_types.csv");
 		LoadProvinces(map_path + "province_details.csv");
-		LoadMapMesh(map_path + "province_map.bmp");
+		LoadMapMesh(map_path + "equal_projection.bmp");
 
-		cout << provinces.size() << endl;
+		cout << "map provinces #" << provinces.size() << endl;
 		for (int i = 0; i < provinces.size(); i++) {
 			Province* p = provinces.at(i);
 			if (p != nullptr) {
@@ -306,7 +305,7 @@ public:
 
 		//for each province loop
 		for (Province*& p : provinces) {
-			//append provinces vertices to end of map veretices
+			//append provinces indices to end of map indices
 			indices.insert(indices.end(), p->GetIndices()->begin(), p->GetIndices()->end());
 		}
 		return indices;

@@ -56,7 +56,7 @@ float cam_rotX = 0;
 
 //TODO:
 std::vector<glm::vec4> color_array_a;
-GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
+GLuint VAO, VBO[2], cVBO[2]; //cVBO Color VBO
 
 std::vector<glm::vec3> vertices_a;
 
@@ -174,23 +174,23 @@ void cursor_scroll(GLFWwindow* window) {
 }
 
 void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
-	if (xpos_old == 0) {
-		xpos_old = xpos;
-		ypos_old = ypos;
-	}
-	float dx = xpos - xpos_old;
-	float dy = ypos - ypos_old;
+	//if (xpos_old == 0) {
+	//	xpos_old = xpos;
+	//	ypos_old = ypos;
+	//}
+	//float dx = xpos - xpos_old;
+	//float dy = ypos - ypos_old;
 
-	glm::vec3  cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
-	cam_dir += cam_right * (dx / 100.f);
-	cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
-	cam_dir -= cam_up * (dy / 100.f);
-	cam_up = glm::normalize(glm::cross(cam_dir, -cam_right));
+	//glm::vec3  cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+	//cam_dir += cam_right * (dx / 100.f);
+	//cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+	//cam_dir -= cam_up * (dy / 100.f);
+	//cam_up = glm::normalize(glm::cross(cam_dir, -cam_right));
 
-	cam_dir = glm::normalize(cam_dir);
+	//cam_dir = glm::normalize(cam_dir);
 
-	xpos_old = xpos;
-	ypos_old = ypos;
+	//xpos_old = xpos;
+	//ypos_old = ypos;
 }
 //**** END CALLBACK FUNCTIONS ****//
 
@@ -270,59 +270,35 @@ int main()
 	std::vector<unsigned int> indices_b;
 	
 	//ask map for vertices and indices.
-	//vertices_a = map->get_map_vertice_data();
+	vertices_a = map->get_map_vertice_data();
+
+	cout << "Vertices_a size: " << vertices_a.size() << endl;
+
+	indices_a = map->get_map_indice_data();
+	
 
 	cout << "Vertices_a size: " << vertices_a.size() << endl;
 	
-	//color_array_a = map->get_map_color_data();
+	color_array_a = map->get_map_color_data();
 	cout << "color_array_a size: " << color_array_a.size() << endl;
-
-	for (int i = 0; i < 1000; i++) {
-		for (int j = 0; j < 1000; j++) {
-			vertices_a.push_back(glm::vec3(i, j, 0));
-			color_array_a.push_back(glm::vec4(i/1000.0, 0.5, j/1000.0, 1.0));
-		}
-	}
-
-	//removed to test map vertices
-	//vertices_a.push_back(glm::vec3(1, 1, 0));
-	//vertices_a.push_back(glm::vec3(1, -1, 0));
-	//vertices_a.push_back(glm::vec3(-1, 1, 0));
-	//vertices_a.push_back(glm::vec3(-1, -1, 0));
-
-	vertices_b.push_back(glm::vec3(3, 1, 0));
-	vertices_b.push_back(glm::vec3(3, -1, 0));
-	vertices_b.push_back(glm::vec3(2, 1, 0));
-	vertices_b.push_back(glm::vec3(2, -1, 0));
-
-	
-	//indices_a.push_back(0);
-	//indices_a.push_back(1);
-	//indices_a.push_back(2);
-	//indices_a.push_back(3);
-	//indices_a.push_back(0);
-	//indices_a.push_back(1);
-	//indices_a.push_back(2);
-
-	indices_b.push_back(0);
-	indices_b.push_back(1);
-	indices_b.push_back(2);
-	indices_b.push_back(2);
-	indices_b.push_back(1);
-	indices_b.push_back(3);
 	
 	//defined outside main function now
 	//GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
 
-	glGenVertexArrays(2, VAO);
-	glGenBuffers(4, VBO);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(2, VBO);
 
-	glBindVertexArray(VAO[0]);
+	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
 	glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(1);
 
 
 	//ignore indices for loop test
@@ -335,44 +311,37 @@ int main()
 	glGenBuffers(1, &cVBO[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, cVBO[0]);
 
-	//colors are retrieved from provinces
-	//std::vector<glm::vec4> color_array_a;
-	//color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-	//color_array_a.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
-	//color_array_a.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
-	//color_array_a.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
-
 	glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
 	
-	glBindVertexArray(VAO[1]);
+	//glBindVertexArray(VAO[1]);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-	glBufferData(GL_ARRAY_BUFFER, vertices_b.size() * sizeof(glm::vec3), &vertices_b.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+	//glBufferData(GL_ARRAY_BUFFER, vertices_b.size() * sizeof(glm::vec3), &vertices_b.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_b.size() * sizeof(unsigned int), &indices_b.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_b.size() * sizeof(unsigned int), &indices_b.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(1);
 
 	//color for second object
 	//GLuint color_VBO;
-	glGenBuffers(1, &cVBO[1]);
-	glBindBuffer(GL_ARRAY_BUFFER, cVBO[1]);
+	//glGenBuffers(1, &cVBO[1]);
+	//glBindBuffer(GL_ARRAY_BUFFER, cVBO[1]);
 
-	std::vector<glm::vec4> color_array_b;
-	color_array_b.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-	color_array_b.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
-	color_array_b.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
-	color_array_b.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
+	//std::vector<glm::vec4> color_array_b;
+	//color_array_b.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+	//color_array_b.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+	//color_array_b.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
+	//color_array_b.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
 
-	glBufferData(GL_ARRAY_BUFFER, color_array_b.size() * sizeof(glm::vec4), &color_array_b.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(2);
+	//glBufferData(GL_ARRAY_BUFFER, color_array_b.size() * sizeof(glm::vec4), &color_array_b.front(), GL_STATIC_DRAW);
+	//glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(2);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -381,7 +350,7 @@ int main()
 
 	glm::mat4 modl_matrix = glm::mat4(1.0f);
 	//glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos+cam_dir, cam_up);
-	glm::mat4 proj_matrix = glm::perspective(45.f, 1.f, 0.1f, 100.f);
+	glm::mat4 proj_matrix = glm::perspective(45.f, 1.f, 0.1f, 1000.f);
 
 	GLuint mm_loc = glGetUniformLocation(shader, "mm");
 	GLuint vm_loc = glGetUniformLocation(shader, "vm");
@@ -429,7 +398,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glBindVertexArray(VAO[0]);
+		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
 
 

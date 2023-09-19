@@ -4,6 +4,12 @@
 #include <vector>
 using namespace std;
 
+//Geographical
+//- Planet
+//  - Region
+//    - Area
+//      - Province
+
 class Province {
 private:
 	string name;
