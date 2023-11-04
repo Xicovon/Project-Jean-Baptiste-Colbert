@@ -12,6 +12,8 @@
 #include "map.h"
 #include <string>
 #include <chrono>
+#include <cmath>
+# define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
 
 // Window dimensions
@@ -26,11 +28,16 @@ GLfloat light_position[] = { 0.0, 0.0, 6.0, 0.0 };
 glm::vec3 cam_pos = glm::vec3(0, 0, 5);
 glm::vec3 cam_dir = glm::vec3(0, 0, -1);
 glm::vec3 cam_up = glm::vec3(0, 1, 0);
+double xpos_old = 0;
+double ypos_old = 0;
+glm::mat4 view_matrix;
 //camera move speed
-float camera_scroll_speed = 5.0;
+float camera_scroll_speed = 1.0;
 float edge_scroll_region = 50; //in pixels
+float mouse_scroll_speed = 4.0;
 bool camera_scroll_continuous = true;
-bool enable_edge_scroll = false;
+bool enable_edge_scroll = true;
+bool debug = false;
 
 //module path
 string module_path = "E:\\Project-Jean-Baptiste-Colbert\\Modules\\Native\\";
@@ -48,10 +55,88 @@ float cam_rotZ = 0;
 //the rotation angle of the camera about its x axis
 float cam_rotX = 0;
 
+glm::vec3 debug_line = glm::vec3(0, 0, 1);
+
+glm::vec3 debug_a = glm::vec3(0, 0, 0);
+glm::vec3 debug_b = glm::vec3(0, 0, 0);
+
 
 //TODO:
 std::vector<glm::vec4> color_array_a;
-GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
+GLuint VAO, VBO[2], cVBO[2]; //cVBO Color VBO
+
+std::vector<glm::vec3> vertices_a;
+
+vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
+	//float height = width / 2;
+	float radius_a = (width - 1) / (2 * M_PI);
+	float radius_b = (width - 2) / (2 * M_PI);
+
+	vector<glm::vec3> new_vertices;
+
+	for each (glm::vec3 v in vertices)
+	{
+		float longitude = (v.x / (radius_a * cos(0))) + 0;
+		float latitude = ((v.y) / radius_b) + 0;
+
+		//longitude = longitude * M_PI / 180;
+		//latitude = latitude * M_PI / 180;
+
+		float x = radius_a * cos(longitude) * sin(latitude);
+		float y = radius_a * sin(longitude) * sin(latitude);
+		float z = radius_a * cos(latitude);
+
+
+		new_vertices.push_back(glm::vec3(x, y, z));
+		//cout << "x:" << v.x << " y:" << v.y << " z:" << v.z << endl;
+	}
+
+	return new_vertices;
+}
+
+//TODO: fix
+bool CalculatePlaneIntersection(glm::vec3* contact, glm::vec3 rayOrigin, glm::vec3 ray) {
+	glm::vec3 normal = glm::vec3(0, 0, 1);
+
+	// get d value
+	float d = glm::dot(normal, glm::vec3(100,50,0));
+
+	if (glm::dot(normal, ray) == 0) {
+		return false; // No intersection, the line is parallel to the plane
+	}
+
+	// Compute the X value for the directed line ray intersecting the plane
+	float x = (d - glm::dot(normal, rayOrigin)) / glm::dot(normal, ray);
+
+	// output contact point
+	*contact = rayOrigin + normalize(ray) * x; //Make sure your ray vector is normalized
+	return true;
+}
+
+//TODO: fix
+void CalculatePointerIntersection(double xInit, double yInit) {
+	// check if cursor intersects object
+	cout << "x:" << cam_dir.x << " y:" << cam_dir.y << " z:" << cam_dir.z << endl;
+
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+
+	float mouseX = xInit / (width * 0.5f) - 1.0f;
+	float mouseY = yInit / (height * 0.5f) - 1.0f;
+
+	glm::mat4 proj = glm::perspective(45.f, 1.f, 0.1f, 1000.f);
+	//glm::mat4 view = glm::lookAt(glm::vec3(0.0f), CameraDirection, CameraUpVector);
+
+	glm::mat4 invVP = glm::inverse(proj * view_matrix);
+	glm::vec4 screenPos = glm::vec4(mouseX, -mouseY, 1.0f, 1.0f);
+	glm::vec4 worldPos = invVP * screenPos;
+
+	glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
+
+	glm::vec3* contact = new glm::vec3(0,0,0);
+	cout << CalculatePlaneIntersection(contact, cam_pos, dir);
+	cout << "x:" << contact->x << " y:" << contact->y << " z:" << contact->z << endl;
+}
 
 //**** CALLBACK FUNCTIONS ****//
 
@@ -64,19 +149,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	if ((key == GLFW_KEY_W || key == GLFW_KEY_UP) && action == GLFW_PRESS) {
 		cam_pos += camera_scroll_speed * cam_up;
-
-		/* TODO: note: code to modify color buffers at runtime.
-		color_array_a.clear();
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		glBindBuffer(GL_ARRAY_BUFFER, cVBO[0]);
-		glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
-		*/
-	}
-	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
-		cam_pos -= camera_scroll_speed * cam_up;
 	}
 	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
 		cam_pos -= camera_scroll_speed * cam_up;
@@ -87,6 +159,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if ((key == GLFW_KEY_D || key == GLFW_KEY_RIGHT) && action == GLFW_PRESS) {
 		cam_pos -= camera_scroll_speed * glm::cross(cam_up, cam_dir);
 	}
+	if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+		debug = !debug;
+	}
 }
 
 //www.glfw.org/docs/latest/input_guide.html#input_mouse_button
@@ -95,6 +170,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		//sets the initial position of the mouse
 		glfwGetCursorPos(window, &xInit, &yInit);
 		drag = true;
+
+		CalculatePointerIntersection(xInit, yInit);
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		drag = false;
@@ -102,7 +179,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-	cam_pos += glm::vec3(0, 0, (-yoffset)*2);
+	cam_pos += glm::vec3(0, 0, (-yoffset)*mouse_scroll_speed);
 }
 
 void cursor_scroll(GLFWwindow* window) {
@@ -155,7 +232,75 @@ void cursor_scroll(GLFWwindow* window) {
 	}
 }
 
+void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (xpos_old == 0) {
+		xpos_old = xpos;
+		ypos_old = ypos;
+	}
+
+	float dx = xpos - xpos_old;
+	float dy = ypos - ypos_old;
+
+	if (drag) {
+		glm::vec3  cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+		cam_dir += cam_right * (dx / 100.f);
+		cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+		cam_dir -= cam_up * (dy / 100.f);
+		cam_up = glm::normalize(glm::cross(cam_dir, -cam_right));
+
+		cam_dir = glm::normalize(cam_dir);
+	}
+	xpos_old = xpos;
+	ypos_old = ypos;
+
+	//glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+}
 //**** END CALLBACK FUNCTIONS ****//
+
+void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices, bool debug) {
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
+
+	if (debug) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	glDrawElements(
+		GL_TRIANGLES,      // mode
+		indices.size(),    // count
+		GL_UNSIGNED_INT,   // type
+		(void*)0           // element array buffer offset
+	);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void DrawPlanet(GLuint VAO, 
+				GLuint VBO, 
+				vector<unsigned int> indices, 
+				glm::mat4 modl_matrix, 
+				GLuint mm_loc, 
+				bool debug = false,
+				float angle_in_radians = 0, 
+				glm::vec3 axis_of_rotation = glm::vec3(0, 0, 1), 
+				float scale = 1, 
+				glm::vec3 transl = glm::vec3(0, 0, 0)
+) {
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glm::mat4 rotator = glm::rotate(glm::mat4(1.0f), angle_in_radians, axis_of_rotation); // where x, y, z is axis of rotation (e.g. 0 1 0)
+	glm::mat4 translator = glm::translate(glm::mat4(1.0f), transl);
+	glm::mat4 scalor = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f * scale, 1 * scale, 1 * scale));
+	modl_matrix = translator * rotator * scalor;
+	glUniformMatrix4fv(mm_loc, 1, GL_FALSE, glm::value_ptr(modl_matrix));
+
+	Draw(VAO, VBO, indices, debug);
+}
 
 int init() {
 	std::cout << "Starting GLFW context, OpenGL 4.3" << std::endl;
@@ -203,6 +348,8 @@ int main()
 	Map* map = new Map(map_path);
 	cout << "Map Load Complete" << endl;
 
+	glfwSetCursorPosCallback(window, cursor_callback);
+	glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -223,118 +370,44 @@ int main()
 	GLuint shader = loadSHADER("vertex.shader", "fragment.shader");
 	glUseProgram(shader);
 
-	std::vector<glm::vec3> vertices_a;
-	std::vector<glm::vec3> vertices_b;
+	
 	//std::vector<glm::vec3> normals;
 	//std::vector<glm::vec2> UVs;
 	std::vector<unsigned int> indices_a;
-	std::vector<unsigned int> indices_b;
-
-	//TODO: Remove old COMP 371 code
-	//load vertices/indices from map
-	//vertices = map->GetVertices();
-	//indices 
-
-	//loadOBJ("cube.obj", vertices, normals, UVs); //read the vertices from the cube.obj file
-	//loadOBJ("cat - Copy.obj", vertices, normals, UVs);
 	
 	//ask map for vertices and indices.
 	vertices_a = map->get_map_vertice_data();
-	cout << "Vertices_a size: " << vertices_a.size() << endl;
-	
+
+	vertices_a = ConvertToSphere(vertices_a, 200);
+
+	indices_a = map->get_map_indice_data();
 	color_array_a = map->get_map_color_data();
-	cout << "color_array_a size: " << color_array_a.size() << endl;
-
-	//removed to test map vertices
-	//vertices_a.push_back(glm::vec3(1, 1, 0));
-	//vertices_a.push_back(glm::vec3(1, -1, 0));
-	//vertices_a.push_back(glm::vec3(-1, 1, 0));
-	//vertices_a.push_back(glm::vec3(-1, -1, 0));
-
-	vertices_b.push_back(glm::vec3(3, 1, 0));
-	vertices_b.push_back(glm::vec3(3, -1, 0));
-	vertices_b.push_back(glm::vec3(2, 1, 0));
-	vertices_b.push_back(glm::vec3(2, -1, 0));
-
-	
-	//indices_a.push_back(0);
-	//indices_a.push_back(1);
-	//indices_a.push_back(2);
-	//indices_a.push_back(3);
-	//indices_a.push_back(0);
-	//indices_a.push_back(1);
-	//indices_a.push_back(2);
-
-	indices_b.push_back(0);
-	indices_b.push_back(1);
-	indices_b.push_back(2);
-	indices_b.push_back(2);
-	indices_b.push_back(1);
-	indices_b.push_back(3);
 	
 	//defined outside main function now
 	//GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
 
-	glGenVertexArrays(2, VAO);
-	glGenBuffers(4, VBO);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(2, VBO);
 
-	glBindVertexArray(VAO[0]);
+	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
 	glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
-
-	//ignore indices for loop test
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_a.size() * sizeof(unsigned int), &indices_a.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
 
 	//GLuint color_VBO;
 	glGenBuffers(1, &cVBO[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, cVBO[0]);
 
-	//colors are retrieved from provinces
-	//std::vector<glm::vec4> color_array_a;
-	//color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-	//color_array_a.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
-	//color_array_a.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
-	//color_array_a.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
-
 	glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
-
-	
-	glBindVertexArray(VAO[1]);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-	glBufferData(GL_ARRAY_BUFFER, vertices_b.size() * sizeof(glm::vec3), &vertices_b.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_b.size() * sizeof(unsigned int), &indices_b.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
-
-	//color for second object
-	//GLuint color_VBO;
-	glGenBuffers(1, &cVBO[1]);
-	glBindBuffer(GL_ARRAY_BUFFER, cVBO[1]);
-
-	std::vector<glm::vec4> color_array_b;
-	color_array_b.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-	color_array_b.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
-	color_array_b.push_back(glm::vec4(0.0, 0.0, 1.0, 1.0));
-	color_array_b.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
-
-	glBufferData(GL_ARRAY_BUFFER, color_array_b.size() * sizeof(glm::vec4), &color_array_b.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(2);
-
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -342,7 +415,7 @@ int main()
 
 	glm::mat4 modl_matrix = glm::mat4(1.0f);
 	//glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos+cam_dir, cam_up);
-	glm::mat4 proj_matrix = glm::perspective(45.f, 1.f, 0.1f, 100.f);
+	glm::mat4 proj_matrix = glm::perspective(45.f, 1.f, 0.1f, 1000.f);
 
 	GLuint mm_loc = glGetUniformLocation(shader, "mm");
 	GLuint vm_loc = glGetUniformLocation(shader, "vm");
@@ -364,23 +437,6 @@ int main()
 		//rotations about the up axis are done by changing cam_dir
 		glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
 		glUniformMatrix4fv(vm_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-		//Variables for model matrix
-		//rotation angles
-		int rotateX = 0;
-		int rotateY = 0;
-		int rotateZ = 0;
-		//the scale of the object
-		float scale = 1;
-
-		//rotates the object
-		glm::mat4 rotator = glm::rotate(glm::mat4(1.0f), rotateX / 180.f, glm::vec3(1, 0, 0));
-		rotator = rotator * glm::rotate(glm::mat4(1.0f), rotateY / 180.f, glm::vec3(0, 1, 0));
-		rotator = rotator * glm::rotate(glm::mat4(1.0f), rotateZ / 180.f, glm::vec3(0, 0, 1));
-		glm::mat4 translator = glm::translate(glm::mat4(1.0f), transl);
-		glm::mat4 scalor = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f*scale, 1*scale, 1*scale));
-		modl_matrix = translator * rotator * scalor;
-		glUniformMatrix4fv(mm_loc, 1, GL_FALSE, glm::value_ptr(modl_matrix));
 		
 		glfwPollEvents();
 		// Render
@@ -390,36 +446,8 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glBindVertexArray(VAO[0]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[1]);
-
-
-		glDrawArrays(GL_LINE_LOOP, 0, vertices_a.size());
-
-		//triangle draw call
-		// Draw the triangles !
-		//glDrawElements(
-		//	GL_TRIANGLES,      // mode
-		//	indices_a.size(),  // count
-		//	GL_UNSIGNED_INT,   // type
-		//	(void*)0           // element array buffer offset
-		//);
-
-		/*
-		glBindVertexArray(VAO[1]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO[3]);
-
-		// Draw the triangles !
-		glDrawElements(
-			GL_TRIANGLES,      // mode
-			indices_b.size(),  // count
-			GL_UNSIGNED_INT,   // type
-			(void*)0           // element array buffer offset
-		);
-		*/
-
-		glBindVertexArray(0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		DrawPlanet(VAO, VBO[1], indices_a, modl_matrix, mm_loc, debug);
+		//Draw(VAO, VBO[1], indices_a); //draw planet map
 		
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
