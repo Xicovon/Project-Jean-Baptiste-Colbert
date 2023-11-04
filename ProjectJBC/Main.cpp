@@ -66,6 +66,7 @@ std::vector<glm::vec4> color_array_a;
 GLuint VAO, VBO[2], cVBO[2]; //cVBO Color VBO
 
 std::vector<glm::vec3> vertices_a;
+std::vector<glm::vec3> vertices_b;
 
 vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
 	//float height = width / 2;
@@ -262,9 +263,9 @@ void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices, bool debug) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
 
 	if (debug) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
-	else {
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
@@ -378,7 +379,8 @@ int main()
 	//ask map for vertices and indices.
 	vertices_a = map->get_map_vertice_data();
 
-	vertices_a = ConvertToSphere(vertices_a, 200);
+	//vertices_a = ConvertToSphere(vertices_a, 200);
+	vertices_b = ConvertToSphere(vertices_a, 200);
 
 	indices_a = map->get_map_indice_data();
 	color_array_a = map->get_map_color_data();
@@ -387,7 +389,7 @@ int main()
 	//GLuint VAO[2], VBO[4], cVBO[2]; //cVBO Color VBO
 
 	glGenVertexArrays(1, &VAO);
-	glGenBuffers(2, VBO);
+	glGenBuffers(3, VBO);
 
 	glBindVertexArray(VAO);
 
@@ -445,6 +447,15 @@ int main()
 		glClearDepth(1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
+
+		if (debug) {
+			glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+			glBufferData(GL_ARRAY_BUFFER, vertices_b.size() * sizeof(glm::vec3), &vertices_b.front(), GL_STATIC_DRAW);
+		}
+		else {
+			glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+			glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
+		}
 
 		DrawPlanet(VAO, VBO[1], indices_a, modl_matrix, mm_loc, debug);
 		//Draw(VAO, VBO[1], indices_a); //draw planet map

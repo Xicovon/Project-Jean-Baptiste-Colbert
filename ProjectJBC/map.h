@@ -164,7 +164,7 @@ private:
 		for (int j = 0; j < height; j++) {
 			for (int i = 0; i < width; i++) {
 				rgb = glm::vec3(image[color_channels * (j * width + i) + 0], image[color_channels * (j * width + i) + 1], image[color_channels * (j * width + i) + 2]);
-				glm::vec3 vertex = glm::vec3(i, -(j), 0);
+				glm::vec3 vertex = glm::vec3(i - (width / 2), j - (height / 2), 0);
 
 				Province* p = GetProvinceByRGB(rgb);
 				p->AddVertex(vertex);
@@ -175,8 +175,8 @@ private:
 		CollateProvinceVertexData();
 
 		int a, b, c, d;
-		for (int j = 0; j < height; j++) {
-			for (int i = 0; i < width; i++) {
+		for (int j = -(height / 2); j < (height / 2); j++) {
+			for (int i = -(width / 2); i < (width / 2); i++) {
 				//     c - x - x
 				//     | \ | \ |
 				//     a - b - x
@@ -184,21 +184,21 @@ private:
 				//     x - d - x
 				// create triangles: a-b-c & a-b-d
 				//cout << "A" << endl;
-				a = FindVertex(glm::vec3(i, -(j), 0));
+				a = FindVertex(glm::vec3(i, j, 0));
 
 				//does vertex b exist?
-				if (i == width - 1) {
+				if (i == (width / 2) - 1) {
 					continue;
 				}
 				else {
 					//cout << "B" << endl;
-					b = FindVertex(glm::vec3(i + 1, -j, 0));
+					b = FindVertex(glm::vec3(i + 1, j, 0));
 				}
 
 				//does vertex c exist?
-				if (j != height - 1) {
+				if (j != (height / 2) - 1) {
 					//cout << "C" << endl;
-					c = FindVertex(glm::vec3(i, -(j + 1), 0));
+					c = FindVertex(glm::vec3(i, j + 1, 0));
 
 					//create triangle C
 					indices.push_back(a);
@@ -207,9 +207,9 @@ private:
 				}
 
 				//does vertex d exist?
-				if (j != 0) {
+				if (j != -(height / 2)) {
 					//cout << "D" << endl;
-					d = FindVertex(glm::vec3(i + 1, -(j - 1), 0));
+					d = FindVertex(glm::vec3(i + 1, j - 1, 0));
 
 					//create triangle D
 					indices.push_back(a);
