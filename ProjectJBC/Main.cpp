@@ -37,6 +37,7 @@ float edge_scroll_region = 50; //in pixels
 float mouse_scroll_speed = 4.0;
 bool camera_scroll_continuous = true;
 bool enable_edge_scroll = true;
+bool debug = false;
 
 //module path
 string module_path = "E:\\Project-Jean-Baptiste-Colbert\\Modules\\Native\\";
@@ -67,23 +68,26 @@ GLuint VAO, VBO[2], cVBO[2]; //cVBO Color VBO
 std::vector<glm::vec3> vertices_a;
 
 vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
-	float height = width / 2;
-	float radius = width / (2 * M_PI);
+	//float height = width / 2;
+	float radius_a = (width - 1) / (2 * M_PI);
+	float radius_b = (width - 2) / (2 * M_PI);
 
 	vector<glm::vec3> new_vertices;
 
 	for each (glm::vec3 v in vertices)
 	{
-		float longitude = (v.x / (radius * cos(0))) + 0;
-		float latitude = ((v.y) / radius) + 0;
+		float longitude = (v.x / (radius_a * cos(0))) + 0;
+		float latitude = ((v.y) / radius_b) + 0;
 
 		//longitude = longitude * M_PI / 180;
 		//latitude = latitude * M_PI / 180;
 
-		float x = radius * cos(longitude) * sin(latitude);
-		float y = radius * sin(longitude) * sin(latitude);
-		float z = radius * cos(latitude);
-		new_vertices.push_back(glm::vec3(x, y, -z));
+		float x = radius_a * cos(longitude) * sin(latitude);
+		float y = radius_a * sin(longitude) * sin(latitude);
+		float z = radius_a * cos(latitude);
+
+
+		new_vertices.push_back(glm::vec3(x, y, z));
 		//cout << "x:" << v.x << " y:" << v.y << " z:" << v.z << endl;
 	}
 
@@ -145,16 +149,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	if ((key == GLFW_KEY_W || key == GLFW_KEY_UP) && action == GLFW_PRESS) {
 		cam_pos += camera_scroll_speed * cam_up;
-
-		/* TODO: note: code to modify color buffers at runtime.
-		color_array_a.clear();
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		color_array_a.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
-		glBindBuffer(GL_ARRAY_BUFFER, cVBO[0]);
-		glBufferData(GL_ARRAY_BUFFER, color_array_a.size() * sizeof(glm::vec4), &color_array_a.front(), GL_STATIC_DRAW);
-		*/
 	}
 	if ((key == GLFW_KEY_S || key == GLFW_KEY_DOWN) && action == GLFW_PRESS) {
 		cam_pos -= camera_scroll_speed * cam_up;
@@ -166,18 +160,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		cam_pos -= camera_scroll_speed * glm::cross(cam_up, cam_dir);
 	}
 	if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-		float radius = 1000 / (2 * M_PI);
-		for (int i = 0; i < vertices_a.size(); i++) {
-			float theta_x = (vertices_a[i].x / 1000) * 360;
-			float theta_y = (vertices_a[i].y / 1000) * 360;
-
-			vertices_a[i].x = sin(theta_x) * sin(theta_y);
-			vertices_a[i].y = cos(theta_x);
-			vertices_a[i].z = sin(theta_x) * cos(theta_y);
-
-		}
-		glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-		glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
+		debug = !debug;
 	}
 }
 
@@ -250,29 +233,40 @@ void cursor_scroll(GLFWwindow* window) {
 }
 
 void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
-	//if (xpos_old == 0) {
-	//	xpos_old = xpos;
-	//	ypos_old = ypos;
-	//}
-	//float dx = xpos - xpos_old;
-	//float dy = ypos - ypos_old;
+	if (xpos_old == 0) {
+		xpos_old = xpos;
+		ypos_old = ypos;
+	}
 
-	//glm::vec3  cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
-	//cam_dir += cam_right * (dx / 100.f);
-	//cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
-	//cam_dir -= cam_up * (dy / 100.f);
-	//cam_up = glm::normalize(glm::cross(cam_dir, -cam_right));
+	float dx = xpos - xpos_old;
+	float dy = ypos - ypos_old;
 
-	//cam_dir = glm::normalize(cam_dir);
+	if (drag) {
+		glm::vec3  cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+		cam_dir += cam_right * (dx / 100.f);
+		cam_right = glm::normalize(glm::cross(cam_dir, cam_up));
+		cam_dir -= cam_up * (dy / 100.f);
+		cam_up = glm::normalize(glm::cross(cam_dir, -cam_right));
 
-	//xpos_old = xpos;
-	//ypos_old = ypos;
+		cam_dir = glm::normalize(cam_dir);
+	}
+	xpos_old = xpos;
+	ypos_old = ypos;
+
+	//glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 }
 //**** END CALLBACK FUNCTIONS ****//
 
-void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices) {
+void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices, bool debug) {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
+
+	if (debug) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	glDrawElements(
 		GL_TRIANGLES,      // mode
@@ -283,6 +277,29 @@ void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices) {
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void DrawPlanet(GLuint VAO, 
+				GLuint VBO, 
+				vector<unsigned int> indices, 
+				glm::mat4 modl_matrix, 
+				GLuint mm_loc, 
+				bool debug = false,
+				float angle_in_radians = 0, 
+				glm::vec3 axis_of_rotation = glm::vec3(0, 0, 1), 
+				float scale = 1, 
+				glm::vec3 transl = glm::vec3(0, 0, 0)
+) {
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glm::mat4 rotator = glm::rotate(glm::mat4(1.0f), angle_in_radians, axis_of_rotation); // where x, y, z is axis of rotation (e.g. 0 1 0)
+	glm::mat4 translator = glm::translate(glm::mat4(1.0f), transl);
+	glm::mat4 scalor = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f * scale, 1 * scale, 1 * scale));
+	modl_matrix = translator * rotator * scalor;
+	glUniformMatrix4fv(mm_loc, 1, GL_FALSE, glm::value_ptr(modl_matrix));
+
+	Draw(VAO, VBO, indices, debug);
 }
 
 int init() {
@@ -420,23 +437,6 @@ int main()
 		//rotations about the up axis are done by changing cam_dir
 		glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
 		glUniformMatrix4fv(vm_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-		//Variables for model matrix
-		//rotation angles
-		int rotateX = 0;
-		int rotateY = 0;
-		int rotateZ = 0;
-		//the scale of the object
-		float scale = 1;
-
-		//rotates the object
-		glm::mat4 rotator = glm::rotate(glm::mat4(1.0f), rotateX / 180.f, glm::vec3(1, 0, 0));
-		rotator = rotator * glm::rotate(glm::mat4(1.0f), rotateY / 180.f, glm::vec3(0, 1, 0));
-		rotator = rotator * glm::rotate(glm::mat4(1.0f), rotateZ / 180.f, glm::vec3(0, 0, 1));
-		glm::mat4 translator = glm::translate(glm::mat4(1.0f), transl);
-		glm::mat4 scalor = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f*scale, 1*scale, 1*scale));
-		modl_matrix = translator * rotator * scalor;
-		glUniformMatrix4fv(mm_loc, 1, GL_FALSE, glm::value_ptr(modl_matrix));
 		
 		glfwPollEvents();
 		// Render
@@ -446,7 +446,8 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		Draw(VAO, VBO[1], indices_a); //draw planet map
+		DrawPlanet(VAO, VBO[1], indices_a, modl_matrix, mm_loc, debug);
+		//Draw(VAO, VBO[1], indices_a); //draw planet map
 		
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
