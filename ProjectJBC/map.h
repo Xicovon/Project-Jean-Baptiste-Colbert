@@ -263,7 +263,7 @@ public:
 	Map(string map_path) {
 		LoadProvinceTerrain(map_path + "terrain_types.csv");
 		LoadProvinces(map_path + "province_details.csv");
-		LoadMapMesh(map_path + "equal_projection.bmp");
+		LoadMapMesh(map_path + "equal_projection - Copy.bmp");
 
 		cout << "map provinces #" << provinces.size() << endl;
 		for (int i = 0; i < provinces.size(); i++) {

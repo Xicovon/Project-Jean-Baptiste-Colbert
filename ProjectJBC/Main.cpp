@@ -77,8 +77,8 @@ vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
 
 	for each (glm::vec3 v in vertices)
 	{
-		float longitude = (v.x / (radius_a * cos(0))) + 0;
-		float latitude = ((v.y) / radius_b) + 0;
+		float longitude = (v.x + (width / 2) / (radius_a * cos(0))) + 0;
+		float latitude = ((v.y + (width / 4)) / radius_b) + 0;
 
 		//longitude = longitude * M_PI / 180;
 		//latitude = latitude * M_PI / 180;
@@ -380,7 +380,7 @@ int main()
 	vertices_a = map->get_map_vertice_data();
 
 	//vertices_a = ConvertToSphere(vertices_a, 200);
-	vertices_b = ConvertToSphere(vertices_a, 200);
+	vertices_b = ConvertToSphere(vertices_a, 100);
 
 	indices_a = map->get_map_indice_data();
 	color_array_a = map->get_map_color_data();
