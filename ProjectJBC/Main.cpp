@@ -77,12 +77,17 @@ vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
 	{
 		float r = (width - 1) / (2 * M_PI);
 		float p = (v.x + (width / 2)) / (width - 1); // how far along the point is
-		float theta = 2 * M_PI * p; //angle of the point
-		theta -= M_PI / 2; // rotate circle by  degrees
+		float theta = 2 * M_PI * p; //angle of the point (0 to 2*PI)
+		theta += M_PI; // rotate circle by  degrees
 
-		float x = -r * cos(theta);
-		float y = v.y;
-		float z = r * sin(theta);
+		float height = width / 2;
+		float p_2 = (v.y + (height / 2)) / (height - 1); // how far along the point is
+		float phi = M_PI * p_2; //angle of the point (0 to PI)
+
+		float x, y, z;
+		x = -r * sin(phi) * sin(theta);
+		y = r * cos(phi);
+		z = r * sin(phi) * cos(theta);
 
 		new_vertices.push_back(glm::vec3(x, y, z));
 	}
@@ -308,12 +313,7 @@ int init() {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-	
-
-	//glfwWindowHint(GLFW_DEPTH_BITS, 32);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
-	//glDisable(GL_CULL_FACE);
 	glEnable(GL_DEBUG_OUTPUT);
 
 	//WINDOW
@@ -341,12 +341,6 @@ int init() {
 // The MAIN function, from here we start the application and run the game loop
 int main()
 {
-	assert(glGetError() == GL_NO_ERROR);
-	// check OpenGL error
-	if ((err = glGetError()) != GL_NO_ERROR) {
-		cerr << "OpenGL error: " << err << endl;
-		cerr << gluErrorString(err) << endl;
-	}
 	//initialize game engine
 	if (init() != 0) {
 		return EXIT_FAILURE;
@@ -473,7 +467,7 @@ int main()
 
 	glm::mat4 modl_matrix = glm::mat4(1.0f);
 	//glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos+cam_dir, cam_up);
-	glm::mat4 proj_matrix = glm::perspective(70.f, 1.0f, 1.f, 1000.f);
+	glm::mat4 proj_matrix = glm::perspective(70.f, 1.f, 1.f, 1000.f);
 
 	GLuint mm_loc = glGetUniformLocation(shader, "mm");
 	GLuint vm_loc = glGetUniformLocation(shader, "vm");
@@ -489,9 +483,6 @@ int main()
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
-
-		
-
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		cursor_scroll(window);
 
@@ -500,6 +491,7 @@ int main()
 		glUniformMatrix4fv(vm_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
 		
 		glfwPollEvents();
+		glEnable(GL_CULL_FACE);
 		// Render
 		// Clear the colorbuffer
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
