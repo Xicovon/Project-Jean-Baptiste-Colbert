@@ -16,6 +16,8 @@
 # define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
 
+GLenum err;
+
 // Window dimensions
 const GLuint WIDTH = 1920, HEIGHT = 1080;
 GLFWwindow *window;
@@ -69,27 +71,20 @@ std::vector<glm::vec3> vertices_a;
 std::vector<glm::vec3> vertices_b;
 
 vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
-	//float height = width / 2;
-	float radius_a = (width - 1) / (2 * M_PI);
-	float radius_b = (width - 2) / (2 * M_PI);
-
 	vector<glm::vec3> new_vertices;
 
 	for each (glm::vec3 v in vertices)
 	{
-		float longitude = (v.x + (width / 2) / (radius_a * cos(0))) + 0;
-		float latitude = ((v.y + (width / 4)) / radius_b) + 0;
+		float r = (width - 1) / (2 * M_PI);
+		float p = (v.x + (width / 2)) / (width - 1); // how far along the point is
+		float theta = 2 * M_PI * p; //angle of the point
+		theta -= M_PI / 2; // rotate circle by  degrees
 
-		//longitude = longitude * M_PI / 180;
-		//latitude = latitude * M_PI / 180;
-
-		float x = radius_a * cos(longitude) * sin(latitude);
-		float y = radius_a * sin(longitude) * sin(latitude);
-		float z = radius_a * cos(latitude);
-
+		float x = -r * cos(theta);
+		float y = v.y;
+		float z = r * sin(theta);
 
 		new_vertices.push_back(glm::vec3(x, y, z));
-		//cout << "x:" << v.x << " y:" << v.y << " z:" << v.z << endl;
 	}
 
 	return new_vertices;
@@ -312,7 +307,14 @@ int init() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+	
+
+	//glfwWindowHint(GLFW_DEPTH_BITS, 32);
 	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+	glEnable(GL_DEBUG_OUTPUT);
 
 	//WINDOW
 	window = glfwCreateWindow(WIDTH, HEIGHT, "Project JBC", nullptr, nullptr);
@@ -339,6 +341,12 @@ int init() {
 // The MAIN function, from here we start the application and run the game loop
 int main()
 {
+	assert(glGetError() == GL_NO_ERROR);
+	// check OpenGL error
+	if ((err = glGetError()) != GL_NO_ERROR) {
+		cerr << "OpenGL error: " << err << endl;
+		cerr << gluErrorString(err) << endl;
+	}
 	//initialize game engine
 	if (init() != 0) {
 		return EXIT_FAILURE;
@@ -411,13 +419,61 @@ int main()
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
+	//background???
+
+	std::vector<glm::vec4> color_array_background;
+	std::vector<glm::vec3> vertices_background;
+	std::vector<unsigned int> indices_background;
+
+	vertices_background.push_back(glm::vec3(-100, -100, -10));
+	vertices_background.push_back(glm::vec3(100, -100, -10));
+	vertices_background.push_back(glm::vec3(-100, 100, -10));
+	vertices_background.push_back(glm::vec3(100, 100, -10));
+
+	indices_background.push_back(1);
+	indices_background.push_back(3);
+	indices_background.push_back(0);
+	indices_background.push_back(0);
+	indices_background.push_back(3);
+	indices_background.push_back(2);
+
+	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
+	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
+	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
+	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
+
+
+	GLuint VAO_background, VBO_background[3], cVBO_background;
+	glGenVertexArrays(1, &VAO_background);
+	glGenBuffers(3, VBO_background);
+
+	glBindVertexArray(VAO_background);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_background[0]);
+	glBufferData(GL_ARRAY_BUFFER, vertices_background.size() * sizeof(glm::vec3), &vertices_background.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO_background[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_background.size() * sizeof(unsigned int), &indices_background.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+
+	//GLuint color_VBO;
+	glGenBuffers(1, &cVBO_background);
+	glBindBuffer(GL_ARRAY_BUFFER, cVBO_background);
+
+	glBufferData(GL_ARRAY_BUFFER, color_array_background.size() * sizeof(glm::vec4), &color_array_background.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(2);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
 
 	glm::mat4 modl_matrix = glm::mat4(1.0f);
 	//glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos+cam_dir, cam_up);
-	glm::mat4 proj_matrix = glm::perspective(45.f, 1.f, 0.1f, 1000.f);
+	glm::mat4 proj_matrix = glm::perspective(70.f, 1.0f, 1.f, 1000.f);
 
 	GLuint mm_loc = glGetUniformLocation(shader, "mm");
 	GLuint vm_loc = glGetUniformLocation(shader, "vm");
@@ -433,6 +489,9 @@ int main()
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
+
+		
+
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		cursor_scroll(window);
 
@@ -443,8 +502,7 @@ int main()
 		glfwPollEvents();
 		// Render
 		// Clear the colorbuffer
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-		glClearDepth(1.f);
+		glClearColor(0.f, 0.f, 0.f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -457,7 +515,9 @@ int main()
 			glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
 		}
 
+		//DrawPlanet(VAO_background, VBO_background[1], indices_background, modl_matrix, mm_loc, debug);
 		DrawPlanet(VAO, VBO[1], indices_a, modl_matrix, mm_loc, debug);
+
 		//Draw(VAO, VBO[1], indices_a); //draw planet map
 		
 		// Swap the screen buffers

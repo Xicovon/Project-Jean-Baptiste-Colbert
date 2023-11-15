@@ -182,7 +182,7 @@ private:
 				//     a - b - x
 				//     | \ | \ |
 				//     x - d - x
-				// create triangles: a-b-c & a-b-d
+				// create triangles: a-b-c & a-d-b
 				//cout << "A" << endl;
 				a = FindVertex(glm::vec3(i, j, 0));
 
@@ -213,8 +213,8 @@ private:
 
 					//create triangle D
 					indices.push_back(a);
-					indices.push_back(b);
 					indices.push_back(d);
+					indices.push_back(b);
 				}
 			}
 		}
@@ -263,7 +263,7 @@ public:
 	Map(string map_path) {
 		LoadProvinceTerrain(map_path + "terrain_types.csv");
 		LoadProvinces(map_path + "province_details.csv");
-		LoadMapMesh(map_path + "equal_projection - Copy.bmp");
+		LoadMapMesh(map_path + "equal_projection_2.bmp");
 
 		cout << "map provinces #" << provinces.size() << endl;
 		for (int i = 0; i < provinces.size(); i++) {
