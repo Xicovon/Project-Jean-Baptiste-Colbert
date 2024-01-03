@@ -266,7 +266,7 @@ public:
 		LoadMapMesh(map_path + "equal_projection_2.bmp");
 
 		cout << "map provinces #" << provinces.size() << endl;
-		for (int i = 0; i < provinces.size(); i++) {
+		for (unsigned int i = 0; i < provinces.size(); i++) {
 			Province* p = provinces.at(i);
 			if (p != nullptr) {
 				cout << "index: " << i << endl;

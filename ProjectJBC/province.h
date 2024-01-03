@@ -71,7 +71,7 @@ public:
 
 	vector<glm::vec4> GetRGBArray() {
 		vector<glm::vec4> colorArray;
-		for (int i = 0; i < vertices.size(); i++) {
+		for (unsigned int i = 0; i < vertices.size(); i++) {
 			colorArray.push_back(glm::vec4(rgb.r, rgb.g, rgb.b, 1.0));
 		}
 		return colorArray;

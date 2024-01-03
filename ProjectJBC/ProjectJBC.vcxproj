@@ -117,15 +117,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="map.h" />
+    <ClInclude Include="mapGenerator.h" />
     <ClInclude Include="OBJloader.h" />
     <ClInclude Include="objloaderIndex.h" />
     <ClInclude Include="province.h" />
     <ClInclude Include="provinceTerrain.h" />
+    <ClInclude Include="random.h" />
     <ClInclude Include="shaderloader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="diamondSquare.h" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -13,6 +13,7 @@
 #include <string>
 #include <chrono>
 #include <cmath>
+#include <mapGenerator.h>
 # define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
 
@@ -75,16 +76,16 @@ vector<glm::vec3> ConvertToSphere(vector<glm::vec3> vertices, double width) {
 
 	for each (glm::vec3 v in vertices)
 	{
-		float r = (width - 1) / (2 * M_PI);
-		float p = (v.x + (width / 2)) / (width - 1); // how far along the point is
-		float theta = 2 * M_PI * p; //angle of the point (0 to 2*PI)
+		double r = (width - 1) / (2 * M_PI);
+		double p = (v.x + (width / 2)) / (width - 1); // how far along the point is
+		double theta = 2 * M_PI * p; //angle of the point (0 to 2*PI)
 		theta += M_PI; // rotate circle by  degrees
 
-		float height = width / 2;
-		float p_2 = (v.y + (height / 2)) / (height - 1); // how far along the point is
-		float phi = M_PI * p_2; //angle of the point (0 to PI)
+		double height = width / 2;
+		double p_2 = (v.y + (height / 2)) / (height - 1); // how far along the point is
+		double phi = M_PI * p_2; //angle of the point (0 to PI)
 
-		float x, y, z;
+		double x, y, z;
 		x = -r * sin(phi) * sin(theta);
 		y = r * cos(phi);
 		z = r * sin(phi) * cos(theta);
@@ -122,8 +123,8 @@ void CalculatePointerIntersection(double xInit, double yInit) {
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 
-	float mouseX = xInit / (width * 0.5f) - 1.0f;
-	float mouseY = yInit / (height * 0.5f) - 1.0f;
+	double mouseX = xInit / (width * 0.5f) - 1.0f;
+	double mouseY = yInit / (height * 0.5f) - 1.0f;
 
 	glm::mat4 proj = glm::perspective(45.f, 1.f, 0.1f, 1000.f);
 	//glm::mat4 view = glm::lookAt(glm::vec3(0.0f), CameraDirection, CameraUpVector);
@@ -414,6 +415,7 @@ int main()
 	glEnableVertexAttribArray(2);
 
 	//background???
+	std::vector<std::vector<double>> height_map = GenerateMap(4);
 
 	std::vector<glm::vec4> color_array_background;
 	std::vector<glm::vec3> vertices_background;

@@ -1,13 +1,16 @@
 #pragma once
 #include <stdlib.h>
 #include <vector>
+#include <diamondSquare.h>
+#include <string>
+#include <iostream>
 
 struct Tile {
 	int province_id;
 	//int water_province_id;
 };
 
-struct Province {
+struct GeneratorProvince {
 	int id;
 	int x;
 	int y;
@@ -24,15 +27,15 @@ int TileCount(int tiles_remaining, int provinces_remaining) {
 	return (tiles_remaining / provinces_remaining) + variation;
 }
 
-float CalculateDistance(int x1, int y1, int x2, int y2) {
+double CalculateDistance(int x1, int y1, int x2, int y2) {
 	return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) * 1.0);
 }
 
-int ClosestProvince(int x, int y, std::vector<Province>* provinces) {
+int ClosestProvince(int x, int y, std::vector<GeneratorProvince>* provinces) {
 	int closest_province = provinces->at(0).id;
 	float distance = CalculateDistance(x, y, provinces->at(0).x, provinces->at(0).y);
 
-	for (int i = 1; i < provinces->size(); i++) {
+	for (unsigned int i = 1; i < provinces->size(); i++) {
 		float new_distance = CalculateDistance(x, y, provinces->at(i).x, provinces->at(i).y);
 		if (new_distance < distance) {
 			closest_province = i;
@@ -44,11 +47,11 @@ int ClosestProvince(int x, int y, std::vector<Province>* provinces) {
 }
 
 // TODO: Update world gen with water tiles and terrain
-bool GenerateMap(int province_count, int width, bool water = false, float water_ratio = 0.2) {
+void GenerateMap(int province_count, int width, bool water = false, float water_ratio = 0.2) {
 	int height = width / 2;
 
 	std::vector<std::vector<Tile>> map;
-	std::vector<Province> provinces;
+	std::vector<GeneratorProvince> provinces;
 	//std::vector<Province> water_provinces;
 
 	//int water_provinces_count = water ? water_ratio * province_count : 0;
@@ -73,3 +76,25 @@ bool GenerateMap(int province_count, int width, bool water = false, float water_
 	//}
 
 }
+
+void PopulateNoiseMap(std::vector<std::vector<int>>* empty_map, int height, int width) {
+	for (int i = 0; i > height; i++) {
+		for (int j = 0; j < width; j++) {
+			empty_map->at(i).at(j) = (int)rand() % 100; // random number from 0 to 99
+		}
+	}
+}
+
+std::vector<std::vector<double>> GenerateMap(int width) {
+	int height = width / 2;
+	std::vector<std::vector<int>>* noise_map = new std::vector<std::vector<int>>;
+	PopulateNoiseMap(noise_map, height, width);
+
+	// do heightmap to determine where water (oceans & lakes * unpassable mountains)
+	std::vector<std::vector<double>> height_map = DiamondSquare(width, rand() % 1000, rand() % 1000, rand() % 1000, rand() % 1000, 1);
+
+	// do voronoi noise to create land terrain
+
+	return height_map;
+}
+

@@ -7,6 +7,9 @@
     <ClCompile Include="Main.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="diamondSquare.h">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="map.h">
@@ -33,6 +36,12 @@
     <ClInclude Include="provinceTerrain.h">
       <Filter>Game</Filter>
     </ClInclude>
+    <ClInclude Include="mapGenerator.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="random.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Game">
@@ -40,6 +49,9 @@
     </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{d8a2c505-427c-4d75-8a80-94e9e7e9a20e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{f36d3337-9ffc-4ecb-a516-4afddc1cce0a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
