@@ -14,6 +14,8 @@
 #include <chrono>
 #include <cmath>
 #include <mapGenerator.h>
+#include "bufferWrapper.h"
+#include <random.h>
 # define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
 
@@ -259,7 +261,7 @@ void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 //**** END CALLBACK FUNCTIONS ****//
 
-void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices, bool debug) {
+void Draw(GLuint VAO, GLuint VBO, unsigned int index_size, bool debug) {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
 
@@ -272,7 +274,7 @@ void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices, bool debug) {
 
 	glDrawElements(
 		GL_TRIANGLES,      // mode
-		indices.size(),    // count
+		index_size,		   // count
 		GL_UNSIGNED_INT,   // type
 		(void*)0           // element array buffer offset
 	);
@@ -283,7 +285,7 @@ void Draw(GLuint VAO, GLuint VBO, vector<unsigned int> indices, bool debug) {
 
 void DrawPlanet(GLuint VAO, 
 				GLuint VBO, 
-				vector<unsigned int> indices, 
+				unsigned int index_size, 
 				glm::mat4 modl_matrix, 
 				GLuint mm_loc, 
 				bool debug = false,
@@ -301,7 +303,7 @@ void DrawPlanet(GLuint VAO,
 	modl_matrix = translator * rotator * scalor;
 	glUniformMatrix4fv(mm_loc, 1, GL_FALSE, glm::value_ptr(modl_matrix));
 
-	Draw(VAO, VBO, indices, debug);
+	Draw(VAO, VBO, index_size, debug);
 }
 
 int init() {
@@ -336,6 +338,9 @@ int init() {
 		std::cout << "Failed to initialize GLEW" << std::endl;
 		return EXIT_FAILURE;
 	}
+
+	InitRandom();
+
 	return 0;
 }
 
@@ -414,58 +419,78 @@ int main()
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(2);
 
-	//background???
-	std::vector<std::vector<double>> height_map = GenerateMap(4);
+
+
+
+	std::vector<std::vector<double>> height_map = GenerateMap(4, 0.2);
 
 	std::vector<glm::vec4> color_array_background;
 	std::vector<glm::vec3> vertices_background;
 	std::vector<unsigned int> indices_background;
 
-	vertices_background.push_back(glm::vec3(-100, -100, -10));
-	vertices_background.push_back(glm::vec3(100, -100, -10));
-	vertices_background.push_back(glm::vec3(-100, 100, -10));
-	vertices_background.push_back(glm::vec3(100, 100, -10));
+	for (int y = 0; y < height_map.size(); y++) {
+		for (int x = 0; x < height_map.at(y).size(); x++) {
+			double h = height_map.at(x).at(y);
+			std::cout << "X:" << x << " Y:" << y << " H:" << h << std::endl;
+			vertices_background.push_back(glm::vec3(x, -y, h * 20));
 
-	indices_background.push_back(1);
-	indices_background.push_back(3);
-	indices_background.push_back(0);
-	indices_background.push_back(0);
-	indices_background.push_back(3);
-	indices_background.push_back(2);
+			color_array_background.push_back(glm::vec4((double) x / height_map.at(0).size(), (double) y / height_map.size(), 0, 1.0));
+		}
+	}
 
-	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
-	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
-	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
-	color_array_background.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
+	int size = height_map.size();
+	int desired_size = (size / 2) - 1;
 
+	//while (height_map.size() > desired_size) {
+		//height_map.pop_back();
+	//}
 
-	GLuint VAO_background, VBO_background[3], cVBO_background;
-	glGenVertexArrays(1, &VAO_background);
-	glGenBuffers(3, VBO_background);
+	std::cout << "height: " << height_map.size() << std::endl;
+	std::cout << "width: " << height_map.at(0).size() << std::endl;
 
-	glBindVertexArray(VAO_background);
+	//vertices_background = ConvertToSphere(vertices_background, height_map.at(0).size());
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_background[0]);
-	glBufferData(GL_ARRAY_BUFFER, vertices_background.size() * sizeof(glm::vec3), &vertices_background.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
+	int a, b, c, d;
+	int width = height_map.size();
+	int height = height_map.at(0).size();
+	for (int y = 0; y < width; y++) {
+		for (int x = 0; x < height; x++) {
+			//     c - x - x
+			//     | \ | \ |
+			//     a - b - x
+			//     | \ | \ |
+			//     x - d - x
+			// create triangles: a-b-c & a-d-b
+			a = (y * height) + x;
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO_background[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_background.size() * sizeof(unsigned int), &indices_background.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
+			//does vertex b exist?
+			if (x != width - 1) {
+				b = (y * height) + x + 1;
+			}
 
-	//GLuint color_VBO;
-	glGenBuffers(1, &cVBO_background);
-	glBindBuffer(GL_ARRAY_BUFFER, cVBO_background);
+			//does vertex c exist?
+			if (y != 0) {
+				c = ((y - 1) * height) + x;
 
-	glBufferData(GL_ARRAY_BUFFER, color_array_background.size() * sizeof(glm::vec4), &color_array_background.front(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(2);
+				//create triangle C
+				indices_background.push_back(a);
+				indices_background.push_back(b);
+				indices_background.push_back(c);
+			}
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
+			//does vertex d exist?
+			if (x != height - 1 && y != width - 1) {
+				d = ((y + 1) * height) + x + 1;
+
+				//create triangle D
+				indices_background.push_back(a);
+				indices_background.push_back(d);
+				indices_background.push_back(b);
+			}
+		}
+	}
+
+	BufferWrapper height_map_renderer = BufferWrapper(vertices_background, indices_background, color_array_background);
 
 	glm::mat4 modl_matrix = glm::mat4(1.0f);
 	//glm::mat4 view_matrix = glm::lookAt(cam_pos, cam_pos+cam_dir, cam_up);
@@ -509,8 +534,10 @@ int main()
 			glBufferData(GL_ARRAY_BUFFER, vertices_a.size() * sizeof(glm::vec3), &vertices_a.front(), GL_STATIC_DRAW);
 		}
 
-		//DrawPlanet(VAO_background, VBO_background[1], indices_background, modl_matrix, mm_loc, debug);
-		DrawPlanet(VAO, VBO[1], indices_a, modl_matrix, mm_loc, debug);
+		//DrawPlanet(VAO_background, VBO_background[1], indices_background.size(), modl_matrix, mm_loc, debug);
+		//DrawPlanet(VAO, VBO[1], indices_a.size(), modl_matrix, mm_loc, debug);
+
+		DrawPlanet(height_map_renderer.GetVAO(), height_map_renderer.GetIndexVBO(), height_map_renderer.GetIndicesSize(), modl_matrix, mm_loc, debug);
 
 		//Draw(VAO, VBO[1], indices_a); //draw planet map
 		

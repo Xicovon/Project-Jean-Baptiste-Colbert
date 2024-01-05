@@ -42,6 +42,9 @@
     <ClInclude Include="random.h">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="bufferWrapper.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Game">

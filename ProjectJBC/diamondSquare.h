@@ -58,9 +58,9 @@ std::vector<std::vector<double>> DiamondSquare(int n, double tl, double tr, doub
 				unsigned int middle_x = (tl_x + tr_x + bl_x + br_x) / 4;
 				unsigned int middle_y = (tl_y + tr_y + bl_y + br_y) / 4;
 
-				unsigned int t_x = middle_x;					unsigned int t_y = middle_y + (step_size / 2);
+				unsigned int t_x = middle_x;					unsigned int t_y = middle_y - (step_size / 2);
 				unsigned int r_x = middle_x + (step_size / 2);	unsigned int r_y = middle_y;
-				unsigned int b_x = middle_x;					unsigned int b_y = middle_y - (step_size / 2);
+				unsigned int b_x = middle_x;					unsigned int b_y = middle_y + (step_size / 2);
 				unsigned int l_x = middle_x - (step_size / 2);	unsigned int l_y = middle_y;
 
 				unsigned int rr_x = r_x + (step_size / 2);	unsigned int rr_y = r_y;
@@ -74,7 +74,7 @@ std::vector<std::vector<double>> DiamondSquare(int n, double tl, double tr, doub
 					) / 3 + (random_scale * (rand() % 20000 / 10000.0 - 1));
 				}
 				if (rr_x >= 0 && rr_x <= vertices_n - 1 && rr_y >= 0 && rr_y <= vertices_n - 1) {
-					height_map.at(b_x).at(b_y) = (
+					height_map.at(r_x).at(r_y) = (
 						height_map.at(br_x).at(br_y) +
 						height_map.at(tr_x).at(tr_y) +
 						height_map.at(rr_x).at(rr_y) +
@@ -82,7 +82,7 @@ std::vector<std::vector<double>> DiamondSquare(int n, double tl, double tr, doub
 					) / 4 + (random_scale * (rand() % 20000 / 10000.0 - 1));
 				}
 				else {
-					height_map.at(b_x).at(b_y) = (
+					height_map.at(r_x).at(r_y) = (
 						height_map.at(br_x).at(br_y) +
 						height_map.at(tr_x).at(tr_y) +
 						height_map.at(middle_x).at(middle_y)

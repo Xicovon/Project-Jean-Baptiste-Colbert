@@ -85,13 +85,50 @@ void PopulateNoiseMap(std::vector<std::vector<int>>* empty_map, int height, int 
 	}
 }
 
-std::vector<std::vector<double>> GenerateMap(int width) {
+double GetMax(std::vector<std::vector<double>>* v) {
+	double max_value = 0;
+	for (int i = 0; i < v->size(); i++) {
+		double local_max = *max_element(std::begin(v->at(i)), std::end(v->at(i)));
+		if (local_max > max_value) {
+			max_value = local_max;
+		}
+	}
+	return max_value;
+}
+
+std::vector<std::vector<double>> Clamp(std::vector<std::vector<double>> v) {
+	double max = GetMax(&v);
+	if (max > 1) {
+		for (int i = 0; i < v.size(); i++) {
+			for (int j = 0; j < v.size(); j++) {
+				v.at(i).at(j) = v.at(i).at(j) / max;
+			}
+		}
+	}
+	return v;
+}
+
+std::vector<std::vector<double>> GenerateMap(int width, double random_scale) {
 	int height = width / 2;
 	std::vector<std::vector<int>>* noise_map = new std::vector<std::vector<int>>;
 	PopulateNoiseMap(noise_map, height, width);
 
+	//double i = rand() % 20000 / 10000.0 - 1;
+	//double j = rand() % 20000 / 10000.0 - 1;
+	double i = 0.5;
+	double j = 0.5;
+
 	// do heightmap to determine where water (oceans & lakes * unpassable mountains)
-	std::vector<std::vector<double>> height_map = DiamondSquare(width, rand() % 1000, rand() % 1000, rand() % 1000, rand() % 1000, 1);
+	std::vector<std::vector<double>> height_map = DiamondSquare(
+		width,
+		i,
+		i,
+		j,
+		j,
+		random_scale
+	);
+
+	height_map = Clamp(height_map);
 
 	// do voronoi noise to create land terrain
 
