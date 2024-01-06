@@ -120,6 +120,8 @@
     <ClInclude Include="mapGenerator.h" />
     <ClInclude Include="OBJloader.h" />
     <ClInclude Include="objloaderIndex.h" />
+    <ClInclude Include="PerlinNoise.hpp" />
+    <ClInclude Include="perlinNoiseWrapper.h" />
     <ClInclude Include="province.h" />
     <ClInclude Include="provinceTerrain.h" />
     <ClInclude Include="random.h" />

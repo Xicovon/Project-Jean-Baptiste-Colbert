@@ -119,7 +119,7 @@ std::vector<std::vector<double>> GenerateMap(int width, double random_scale) {
 	double j = 0.5;
 
 	// do heightmap to determine where water (oceans & lakes * unpassable mountains)
-	std::vector<std::vector<double>> height_map = DiamondSquare(
+	std::vector<std::vector<double>> height_map = DiamondSquare2(
 		width,
 		i,
 		i,

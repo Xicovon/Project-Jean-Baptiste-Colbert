@@ -16,6 +16,7 @@
 #include <mapGenerator.h>
 #include "bufferWrapper.h"
 #include <random.h>
+#include "perlinNoiseWrapper.h"
 # define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
 
@@ -420,30 +421,33 @@ int main()
 	glEnableVertexAttribArray(2);
 
 
+	std::vector<std::vector<double>> height_map = GenerateMap(3, 0.1);
 
+	int size = height_map.size();
+	int desired_size = (size / 2);
 
-	std::vector<std::vector<double>> height_map = GenerateMap(4, 0.2);
+	for (int k = 0; k < height_map.size(); k++) {
+		while (height_map.at(k).size() > desired_size) {
+			height_map.at(k).pop_back();
+		}
+	}
+	
 
 	std::vector<glm::vec4> color_array_background;
 	std::vector<glm::vec3> vertices_background;
 	std::vector<unsigned int> indices_background;
 
-	for (int y = 0; y < height_map.size(); y++) {
-		for (int x = 0; x < height_map.at(y).size(); x++) {
+	for (int y = 0; y < height_map.at(0).size(); y++) {
+		for (int x = 0; x < height_map.size(); x++) {
 			double h = height_map.at(x).at(y);
 			std::cout << "X:" << x << " Y:" << y << " H:" << h << std::endl;
 			vertices_background.push_back(glm::vec3(x, -y, h * 20));
 
-			color_array_background.push_back(glm::vec4((double) x / height_map.at(0).size(), (double) y / height_map.size(), 0, 1.0));
+			color_array_background.push_back(glm::vec4((double) x / height_map.at(0).size(), (double) y / height_map.size(), h, 1.0));
 		}
 	}
 
-	int size = height_map.size();
-	int desired_size = (size / 2) - 1;
-
-	//while (height_map.size() > desired_size) {
-		//height_map.pop_back();
-	//}
+	
 
 	std::cout << "height: " << height_map.size() << std::endl;
 	std::cout << "width: " << height_map.at(0).size() << std::endl;
@@ -461,16 +465,16 @@ int main()
 			//     | \ | \ |
 			//     x - d - x
 			// create triangles: a-b-c & a-d-b
-			a = (y * height) + x;
+			a = (y * width) + x;
 
 			//does vertex b exist?
 			if (x != width - 1) {
-				b = (y * height) + x + 1;
+				b = (y * width) + x + 1;
 			}
 
 			//does vertex c exist?
 			if (y != 0) {
-				c = ((y - 1) * height) + x;
+				c = ((y - 1) * width) + x;
 
 				//create triangle C
 				indices_background.push_back(a);
@@ -479,8 +483,8 @@ int main()
 			}
 
 			//does vertex d exist?
-			if (x != height - 1 && y != width - 1) {
-				d = ((y + 1) * height) + x + 1;
+			if (x != width - 1 && y != height - 1) {
+				d = ((y + 1) * width) + x + 1;
 
 				//create triangle D
 				indices_background.push_back(a);

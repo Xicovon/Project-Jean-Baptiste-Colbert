@@ -45,6 +45,12 @@
     <ClInclude Include="bufferWrapper.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="PerlinNoise.hpp">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="perlinNoiseWrapper.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Game">
